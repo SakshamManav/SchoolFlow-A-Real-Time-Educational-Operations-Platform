@@ -10,6 +10,12 @@ app.get('/', (req, res) => {
 });
 
 
+app.use("/api/auth", authRoutes); // authentication
+app.use("/schooluser", require("./routes/User_School_admin_route.js"))
+app.use("/student", require("./routes/StudentRoute.js") )
+app.use("/fees", require("./routes/FeesRoute.js"))
+app.use("/feeshistory", require("./routes/FeesHistoryRoute.js"))
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

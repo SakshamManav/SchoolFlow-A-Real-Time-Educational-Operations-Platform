@@ -1,0 +1,19 @@
+const jwt = require("jsonwebtoken");
+const SECRET_KEY = "your_secret_key";
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // Bearer <token>
+
+  if (!token) return res.status(401).json({ message: "Access Denied" });
+
+  try {
+    const user = jwt.verify(token, SECRET_KEY);
+    req.user = user; // attach user to request
+    next();
+  } catch (err) {
+    res.status(403).json({ message: "Invalid Token" });
+  }
+}
+
+module.exports = authenticateToken;
