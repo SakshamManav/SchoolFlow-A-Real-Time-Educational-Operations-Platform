@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const schoolUserModel = require("../models/User_School_Admin");
+const authenticateToken = require("../middleware/authMiddleware");
 
 
-router.get("/getUser", async (req, res) => {
+router.get("/getallusers", authenticateToken, async (req, res) => {
   try {
     const users = await schoolUserModel.getAllSchoolUsers();
     res.json(users);
@@ -12,31 +13,50 @@ router.get("/getUser", async (req, res) => {
   }
 });
 
-router.get("getuserbyid/:id", async (req, res) => {
+router.get("/getuserbyid/:id", authenticateToken, async (req, res) => {
   try {
     const user = await schoolUserModel.getSchoolUserById(req.params.id);
+
     res.json(user);
   } catch (err) {
+    console.log(err)
+    
     res.status(500).json({ error: err.message });
   }
 });
 
-router.put("update/:id", async (req, res) => {
+router.put("/update/:id", authenticateToken, async (req, res) => {
   try {
     const result = await schoolUserModel.updateSchoolUser(req.params.id, req.body);
-    res.json(result);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const updatedUser = await schoolUserModel.getSchoolUserById(req.params.id);
+    res.json({
+      message: "User updated successfully",
+      user: updatedUser
+    });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.delete("delete/:id", async (req, res) => {
+router.delete("/delete/:id", authenticateToken, async (req, res) => {
   try {
     const result = await schoolUserModel.deleteSchoolUser(req.params.id);
-    res.json(result);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found or already deleted" });
+    }
+
+    res.json({ message: "User deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 module.exports = router;
