@@ -7,6 +7,7 @@ const authenticateToken = require("../middleware/authMiddleware");
 router.get("/getallusers", authenticateToken, async (req, res) => {
   try {
     const users = await schoolUserModel.getAllSchoolUsers();
+    
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });

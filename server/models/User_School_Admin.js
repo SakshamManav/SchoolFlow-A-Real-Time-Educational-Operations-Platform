@@ -1,7 +1,15 @@
 const db = require("../database/db");
 
 async function createSchoolUser(data) {
-  const { name, email, phone, address, logo_url, subscription_plan, hashed_password } = data;
+  const {
+    name,
+    email,
+    phone,
+    address,
+    logo_url,
+    subscription_plan,
+    hashed_password,
+  } = data;
   const [result] = await db.execute(
     `INSERT INTO school_user 
       (name, email, phone, address, logo_url, subscription_plan, hashed_password, created_at, updated_at)
@@ -47,19 +55,21 @@ async function updateSchoolUser(id, data) {
     }
   }
 
-  // Add updated_at
   fieldsToUpdate.push("updated_at = NOW()");
 
-  // Final SQL
-  const sql = `UPDATE school_user SET ${fieldsToUpdate.join(", ")} WHERE id = ?`;
-  values.push(id); // Add id at the end
+  const sql = `UPDATE school_user SET ${fieldsToUpdate.join(
+    ", "
+  )} WHERE id = ?`;
+  values.push(id);
 
   const [result] = await db.execute(sql, values);
   return result;
 }
 
 async function deleteSchoolUser(id) {
-  const [result] = await db.execute("DELETE FROM school_user WHERE id = ?", [id]);
+  const [result] = await db.execute("DELETE FROM school_user WHERE id = ?", [
+    id,
+  ]);
   return result;
 }
 
