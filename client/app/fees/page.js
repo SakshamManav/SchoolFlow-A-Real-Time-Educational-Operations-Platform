@@ -1,6 +1,7 @@
 "use client"
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
 import { CreditCard, Calendar, DollarSign, History, User, Hash, FileText } from 'lucide-react';
+import { useRouter } from "next/navigation";
 
 const FeesPage = () => {
   const [selectedClass, setSelectedClass] = useState('');
@@ -12,7 +13,7 @@ const FeesPage = () => {
     paidAmount: '',
     type: ''
   });
-
+  const router = useRouter();
   // Sample data - in real app this would come from API
   const classes = [
     'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
@@ -177,6 +178,11 @@ const FeesPage = () => {
     'January 2025', 'February 2025', 'March 2025', 'April 2025', 'May 2025', 'June 2025',
     'July 2025', 'August 2025', 'September 2025', 'October 2025', 'November 2025', 'December 2025'
   ];
+  useEffect(() => {
+    if(!localStorage.getItem("token")){
+      router.push("/login")
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4">

@@ -13,6 +13,7 @@ import {
   CreditCard,
   Plus,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const StudentPage = () => {
   const [selectedClass, setSelectedClass] = useState("");
@@ -49,6 +50,7 @@ const StudentPage = () => {
     "Class 11",
     "Class 12",
   ];
+  const router = useRouter();
 
   const [allStudents, setAllStudents] = useState({
     "Class 1": [
@@ -207,6 +209,13 @@ const StudentPage = () => {
     alert(`Student ${studentToAdd.name} has been added successfully!`);
     handleCloseAddForm();
   };
+
+  useEffect(() => {
+    if(!localStorage.getItem("token")){
+      router.push("/login")
+    }
+  }, []);
+
 
   const studentsToShow = selectedClass ? allStudents[selectedClass] || [] : [];
 

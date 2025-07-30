@@ -16,7 +16,7 @@ router.post("/register", async (req, res) => {
     const [result] = await db.execute(
       `INSERT INTO school_user (name, email, phone, address, logo_url, subscription_plan, hashed_password, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [name, email, phone, address, logo_url, subscription_plan, hashed_password]
+      [name, email, phone, address, logo_url || null, subscription_plan || null, hashed_password]
     );
 
 
@@ -47,7 +47,15 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: "7d" });
 
-    res.status(200).json({ message: "Login successful", token });
+    res.status(200).json({ message: "Login successful", token: token, user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      logo_url: user.logo_url,
+      subscription_plan: user.subscription_plan
+    } });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Server error" });
