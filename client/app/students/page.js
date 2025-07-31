@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Eye,
   X,
@@ -15,121 +15,67 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+const API_BASE = "http://localhost:5001/student";
+
 const StudentPage = () => {
   const [selectedClass, setSelectedClass] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [allStudents, setAllStudents] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Form state for adding new student
+  // Form state for adding/updating student
   const [newStudent, setNewStudent] = useState({
-    name: "",
-    rollNo: "",
-    fatherName: "",
-    motherName: "",
+    student_id: "",
+    student_name: "",
     class: "",
+    section: "",
+    father_name: "",
+    mother_name: "",
     dob: "",
-    phone: "",
-    email: "",
+    gender: "",
+    contact_no: "",
+    admission_year: "",
+    prev_school_name: "",
     address: "",
-    aadharNo: "",
+    national_id: "",
+    email: "",
+    stud_pic_url: "",
   });
 
-  // Sample data - in real app this would come from API
-  const classes = [
-    "Class 1",
-    "Class 2",
-    "Class 3",
-    "Class 4",
-    "Class 5",
-    "Class 6",
-    "Class 7",
-    "Class 8",
-    "Class 9",
-    "Class 10",
-    "Class 11",
-    "Class 12",
-  ];
   const router = useRouter();
 
-  const [allStudents, setAllStudents] = useState({
-    "Class 1": [
-      {
-        id: "STD001",
-        name: "Arjun Sharma",
-        rollNo: "001",
-        fatherName: "Rajesh Sharma",
-        class: "Class 1",
-        dob: "2017-05-15",
-        motherName: "Priya Sharma",
-        phone: "+91 9876543210",
-        email: "arjun.sharma@email.com",
-        address: "123 Main Street, Delhi",
-        aadharNo: "1234-5678-9012",
-      },
-      {
-        id: "STD002",
-        name: "Sneha Patel",
-        rollNo: "002",
-        fatherName: "Amit Patel",
-        class: "Class 1",
-        dob: "2017-08-22",
-        motherName: "Meera Patel",
-        phone: "+91 9876543211",
-        email: "sneha.patel@email.com",
-        address: "456 Garden Road, Mumbai",
-        aadharNo: "1234-5678-9013",
-      },
-    ],
-    "Class 2": [
-      {
-        id: "STD003",
-        name: "Rahul Kumar",
-        rollNo: "003",
-        fatherName: "Suresh Kumar",
-        class: "Class 2",
-        dob: "2016-03-10",
-        motherName: "Sunita Kumar",
-        phone: "+91 9876543212",
-        email: "rahul.kumar@email.com",
-        address: "789 Park Avenue, Bangalore",
-        aadharNo: "1234-5678-9014",
-      },
-      {
-        id: "STD004",
-        name: "Ananya Singh",
-        rollNo: "004",
-        fatherName: "Vikram Singh",
-        class: "Class 2",
-        dob: "2016-07-18",
-        motherName: "Kavita Singh",
-        phone: "+91 9876543213",
-        email: "ananya.singh@email.com",
-        address: "321 Hill View, Pune",
-        aadharNo: "1234-5678-9015",
-      },
-    ],
-    "Class 3": [
-      {
-        id: "STD005",
-        name: "Dev Gupta",
-        rollNo: "005",
-        fatherName: "Manoj Gupta",
-        class: "Class 3",
-        dob: "2015-11-05",
-        motherName: "Ritu Gupta",
-        phone: "+91 9876543214",
-        email: "dev.gupta@email.com",
-        address: "654 Lake Side, Chennai",
-        aadharNo: "1234-5678-9016",
-      },
-    ],
-  });
+  // Fetch all students on mount
+  useEffect(() => {
+    if (!localStorage.getItem("token")) {
+      router.push("/login");
+      return;
+    }
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/getallstudents`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const data = await res.json();
+      setAllStudents(data || []);
+    } catch (err) {
+      alert("Failed to fetch students");
+    }
+    setLoading(false);
+  };
 
   const handleClassChange = (e) => {
     setSelectedClass(e.target.value);
   };
 
+  // When viewing a student, show all fields including school_id
   const handleViewStudent = (student) => {
     setSelectedStudent(student);
     setShowPopup(true);
@@ -140,36 +86,77 @@ const StudentPage = () => {
     setSelectedStudent(null);
   };
 
-  const handleDelete = (studentId) => {
-    if (window.confirm("Are you sure you want to delete this student?")) {
-      // In real app, make API call to delete
-      alert(`Student ${studentId} would be deleted`);
-      handleClosePopup();
+  // On update, open the form with current info
+  const handleUpdate = (student_id) => {
+    const student = allStudents.find((s) => s.student_id === student_id);
+    if (student) {
+      setNewStudent(student);
+      setShowAddForm(true);
+      setShowPopup(false); // close view modal
     }
   };
 
-  const handleUpdate = (studentId) => {
-    alert(`Update form for student ${studentId} would open`);
-    // In real app, open update form or navigate to edit page
+  // On delete, call API and refresh
+  const handleDelete = async (student_id) => {
+    if (window.confirm("Are you sure you want to delete this student?")) {
+      try {
+        await fetch(
+          `http://localhost:5001/student/deletestudent/${student_id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        alert("Student deleted successfully!");
+        fetchStudents();
+        handleClosePopup();
+      } catch {
+        alert("Failed to delete student");
+      }
+    }
   };
 
   const handleAddStudent = () => {
+    setNewStudent({
+      student_id: "",
+      student_name: "",
+      class: "",
+      section: "",
+      father_name: "",
+      mother_name: "",
+      dob: "",
+      gender: "",
+      contact_no: "",
+      admission_year: "",
+      prev_school_name: "",
+      address: "",
+      national_id: "",
+      email: "",
+      stud_pic_url: "",
+    });
     setShowAddForm(true);
   };
 
   const handleCloseAddForm = () => {
     setShowAddForm(false);
     setNewStudent({
-      name: "",
-      rollNo: "",
-      fatherName: "",
-      motherName: "",
+      student_id: "",
+      student_name: "",
       class: "",
+      section: "",
+      father_name: "",
+      mother_name: "",
       dob: "",
-      phone: "",
-      email: "",
+      gender: "",
+      contact_no: "",
+      admission_year: "",
+      prev_school_name: "",
       address: "",
-      aadharNo: "",
+      national_id: "",
+      email: "",
+      stud_pic_url: "",
     });
   };
 
@@ -181,43 +168,42 @@ const StudentPage = () => {
     }));
   };
 
-  const handleSubmitStudent = (e) => {
+  const handleSubmitStudent = async (e) => {
     e.preventDefault();
-
-    // Generate new student ID
-    const existingStudents = Object.values(allStudents).flat();
-    const maxId = existingStudents.reduce((max, student) => {
-      const num = parseInt(student.id.replace("STD", ""));
-      return num > max ? num : max;
-    }, 0);
-    const newId = `STD${String(maxId + 1).padStart(3, "0")}`;
-
-    // Create new student object
-    const studentToAdd = {
-      ...newStudent,
-      id: newId,
-    };
-
-    // Add to the appropriate class
-    setAllStudents((prev) => ({
-      ...prev,
-      [newStudent.class]: prev[newStudent.class]
-        ? [...prev[newStudent.class], studentToAdd]
-        : [studentToAdd],
-    }));
-
-    alert(`Student ${studentToAdd.name} has been added successfully!`);
-    handleCloseAddForm();
+    try {
+      const method = newStudent.student_id ? "PUT" : "POST";
+      const url = newStudent.student_id
+        ? `${API_BASE}/updatestudent/${newStudent.student_id}`
+        : `${API_BASE}/create`;
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(newStudent),
+      });
+      if (!res.ok) throw new Error();
+      alert(
+        newStudent.student_id
+          ? "Student updated successfully!"
+          : "Student added successfully!"
+      );
+      fetchStudents();
+      handleCloseAddForm();
+    } catch {
+      alert("Failed to submit student");
+    }
   };
 
-  useEffect(() => {
-    if(!localStorage.getItem("token")){
-      router.push("/login")
-    }
-  }, []);
+  // Classes from backend data
+  const classes = Array.from(
+    new Set(allStudents.map((s) => s.class).filter(Boolean))
+  ).sort();
 
-
-  const studentsToShow = selectedClass ? allStudents[selectedClass] || [] : [];
+  const studentsToShow = selectedClass
+    ? allStudents.filter((s) => s.class === selectedClass)
+    : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -273,7 +259,9 @@ const StudentPage = () => {
               </h2>
             </div>
 
-            {studentsToShow.length > 0 ? (
+            {loading ? (
+              <div className="p-8 text-center text-gray-500">Loading...</div>
+            ) : studentsToShow.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
@@ -285,16 +273,16 @@ const StudentPage = () => {
                         Name
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Roll No
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Father's Name
+                      </th>{" "}
+                      <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Class
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date of Birth
+                        DOB
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Action
@@ -304,20 +292,20 @@ const StudentPage = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {studentsToShow.map((student) => (
                       <tr
-                        key={student.id}
+                        key={student.student_id}
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {student.id}
+                          {student.student_id}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {student.name}
+                          {student.student_name}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {student.rollNo}
-                        </td>
+                          {student.father_name}
+                        </td>{" "}
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {student.fatherName}
+                          {student.contact_no || "-"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
@@ -325,7 +313,9 @@ const StudentPage = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(student.dob).toLocaleDateString("en-IN")}
+                          {student.dob
+                            ? new Date(student.dob).toLocaleDateString("en-IN")
+                            : "-"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <button
@@ -365,7 +355,7 @@ const StudentPage = () => {
         )}
       </div>
 
-      {/* Add Student Form Modal */}
+      {/* Add/Update Student Form Modal */}
       {showAddForm && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50 text-black">
           <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -373,7 +363,7 @@ const StudentPage = () => {
             <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold text-white">
-                  Add New Student
+                  {newStudent.student_id ? "Update Student" : "Add New Student"}
                 </h3>
                 <button
                   onClick={handleCloseAddForm}
@@ -385,7 +375,7 @@ const StudentPage = () => {
             </div>
 
             {/* Form Body */}
-            <div className="p-6">
+            <form className="p-6" onSubmit={handleSubmitStudent}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Student Name */}
                 <div>
@@ -394,8 +384,8 @@ const StudentPage = () => {
                   </label>
                   <input
                     type="text"
-                    name="name"
-                    value={newStudent.name}
+                    name="student_name"
+                    value={newStudent.student_name}
                     onChange={handleFormChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -403,19 +393,34 @@ const StudentPage = () => {
                   />
                 </div>
 
-                {/* Roll Number */}
+                {/* Class */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Roll Number *
+                    Class *
                   </label>
                   <input
                     type="text"
-                    name="rollNo"
-                    value={newStudent.rollNo}
+                    name="class"
+                    value={newStudent.class}
                     onChange={handleFormChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter roll number"
+                    placeholder="Class"
+                  />
+                </div>
+
+                {/* Section */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Section
+                  </label>
+                  <input
+                    type="text"
+                    name="section"
+                    value={newStudent.section}
+                    onChange={handleFormChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Section"
                   />
                 </div>
 
@@ -426,8 +431,8 @@ const StudentPage = () => {
                   </label>
                   <input
                     type="text"
-                    name="fatherName"
-                    value={newStudent.fatherName}
+                    name="father_name"
+                    value={newStudent.father_name}
                     onChange={handleFormChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -442,8 +447,8 @@ const StudentPage = () => {
                   </label>
                   <input
                     type="text"
-                    name="motherName"
-                    value={newStudent.motherName}
+                    name="mother_name"
+                    value={newStudent.mother_name}
                     onChange={handleFormChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -451,28 +456,7 @@ const StudentPage = () => {
                   />
                 </div>
 
-                {/* Class */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Class *
-                  </label>
-                  <select
-                    name="class"
-                    value={newStudent.class}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    <option value="">Select Class</option>
-                    {classes.map((cls) => (
-                      <option key={cls} value={cls}>
-                        {cls}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Date of Birth */}
+                {/* DOB */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Date of Birth *
@@ -480,22 +464,40 @@ const StudentPage = () => {
                   <input
                     type="date"
                     name="dob"
-                    value={newStudent.dob}
+                    value={newStudent.dob ? newStudent.dob.slice(0, 10) : ""}
                     onChange={handleFormChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
 
-                {/* Phone Number */}
+                {/* Gender */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
+                    Gender
+                  </label>
+                  <select
+                    name="gender"
+                    value={newStudent.gender}
+                    onChange={handleFormChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {/* Contact No */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Number *
                   </label>
                   <input
                     type="tel"
-                    name="phone"
-                    value={newStudent.phone}
+                    name="contact_no"
+                    value={newStudent.contact_no}
                     onChange={handleFormChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -503,19 +505,33 @@ const StudentPage = () => {
                   />
                 </div>
 
-                {/* Email */}
+                {/* Admission Year */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email ID *
+                    Admission Year
                   </label>
                   <input
-                    type="email"
-                    name="email"
-                    value={newStudent.email}
+                    type="text"
+                    name="admission_year"
+                    value={newStudent.admission_year}
                     onChange={handleFormChange}
-                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="student@email.com"
+                    placeholder="YYYY"
+                  />
+                </div>
+
+                {/* Previous School Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Previous School Name
+                  </label>
+                  <input
+                    type="text"
+                    name="prev_school_name"
+                    value={newStudent.prev_school_name}
+                    onChange={handleFormChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Previous School"
                   />
                 </div>
 
@@ -535,19 +551,50 @@ const StudentPage = () => {
                   />
                 </div>
 
-                {/* Aadhar Number */}
-                <div className="md:col-span-2">
+                {/* National ID */}
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Aadhar Number *
+                    National ID (Aadhar) *
                   </label>
                   <input
                     type="text"
-                    name="aadharNo"
-                    value={newStudent.aadharNo}
+                    name="national_id"
+                    value={newStudent.national_id}
                     onChange={handleFormChange}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="1234-5678-9012"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email ID *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={newStudent.email}
+                    onChange={handleFormChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="student@email.com"
+                  />
+                </div>
+
+                {/* Student Picture URL */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Student Picture URL
+                  </label>
+                  <input
+                    type="text"
+                    name="stud_pic_url"
+                    value={newStudent.stud_pic_url}
+                    onChange={handleFormChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="https://example.com/photo.jpg"
                   />
                 </div>
               </div>
@@ -562,15 +609,14 @@ const StudentPage = () => {
                   Cancel
                 </button>
                 <button
-                  type="button"
-                  onClick={handleSubmitStudent}
+                  type="submit"
                   className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Student
+                  {newStudent.student_id ? "Update Student" : "Add Student"}
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}
@@ -597,14 +643,21 @@ const StudentPage = () => {
             {/* Modal Body */}
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Basic Info */}
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">
                       Student ID
                     </label>
                     <p className="text-lg font-semibold text-gray-900">
-                      {selectedStudent.id}
+                      {selectedStudent.student_id}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">
+                      School ID
+                    </label>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {selectedStudent.school_id}
                     </p>
                   </div>
                   <div>
@@ -612,17 +665,10 @@ const StudentPage = () => {
                       Name
                     </label>
                     <p className="text-lg font-semibold text-gray-900">
-                      {selectedStudent.name}
+                      {selectedStudent.student_name}
                     </p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">
-                      Roll Number
-                    </label>
-                    <p className="text-lg text-gray-900">
-                      {selectedStudent.rollNo}
-                    </p>
-                  </div>
+
                   <div>
                     <label className="text-sm font-medium text-gray-500">
                       Class
@@ -640,7 +686,7 @@ const StudentPage = () => {
                       Father's Name
                     </label>
                     <p className="text-lg text-gray-900">
-                      {selectedStudent.fatherName}
+                      {selectedStudent.father_name}
                     </p>
                   </div>
                   <div>
@@ -648,7 +694,7 @@ const StudentPage = () => {
                       Mother's Name
                     </label>
                     <p className="text-lg text-gray-900">
-                      {selectedStudent.motherName}
+                      {selectedStudent.mother_name}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -676,7 +722,7 @@ const StudentPage = () => {
                       Phone Number
                     </label>
                     <p className="text-lg text-gray-900">
-                      {selectedStudent.phone}
+                      {selectedStudent.contact_no}
                     </p>
                   </div>
                 </div>
@@ -712,7 +758,7 @@ const StudentPage = () => {
                       Aadhar Number
                     </label>
                     <p className="text-lg text-gray-900">
-                      {selectedStudent.aadharNo}
+                      {selectedStudent.national_id}
                     </p>
                   </div>
                 </div>
@@ -722,14 +768,14 @@ const StudentPage = () => {
             {/* Modal Footer */}
             <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
               <button
-                onClick={() => handleUpdate(selectedStudent.id)}
+                onClick={() => handleUpdate(selectedStudent.student_id)}
                 className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 <Edit className="w-4 h-4" />
                 Update
               </button>
               <button
-                onClick={() => handleDelete(selectedStudent.id)}
+                onClick={() => handleDelete(selectedStudent.student_id)}
                 className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />

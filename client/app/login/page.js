@@ -188,9 +188,12 @@ export default function AuthPages() {
       }
 
       const data = await response.json();
-
+      console.log(data)
       if (!response.ok) {
-        setErrors({ api: data.error || "Something went wrong" });
+        alert(
+          data.message
+        )
+        setErrors({ api: data.message || "Something went wrong" });
       } else {
         if (isLogin) {
           console.log("Response Data:", data);

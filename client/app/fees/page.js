@@ -1,5 +1,5 @@
 "use client"
-import React, { use, useState } from 'react';
+import React, { use, useState, useEffect } from 'react';
 import { CreditCard, Calendar, DollarSign, History, User, Hash, FileText } from 'lucide-react';
 import { useRouter } from "next/navigation";
 

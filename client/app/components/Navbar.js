@@ -243,7 +243,7 @@ export default function Navbar() {
                   }}
                   className="w-full px-4 py-3 bg-white text-indigo-600 hover:bg-white/90 font-semibold rounded-lg transition-all duration-300 shadow-lg"
                 >
-                  Sign In with Google
+                  Sign In 
                 </button>
               )}
             </div>
