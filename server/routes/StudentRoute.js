@@ -7,9 +7,9 @@ router.post("/create", authenticateToken, async (req, res) => {
   try {
     const school_id = req.user.id;
     const result = await studentModel.createStudent(req.body, school_id);
-    res.status(201).json({ result, msg: "NEW student added successfully!!" });
+    res.status(201).json({ result, msg: "Student added successfully!" });
   } catch (err) {
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -19,7 +19,7 @@ router.get("/getallstudents", authenticateToken, async (req, res) => {
     const students = await studentModel.getAllStudents(school_id);
     res.json(students);
   } catch (err) {
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -29,38 +29,29 @@ router.get("/getstudent/:id", authenticateToken, async (req, res) => {
     const student = await studentModel.getStudentById(req.params.id, school_id);
     res.json(student);
   } catch (err) {
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(404).json({ error: err.message });
   }
 });
 
 router.put("/updatestudent/:id", authenticateToken, async (req, res) => {
   try {
-    const id = req.params.id; // primary key
-    const school_id = req.user.id; // from JWT
+    const id = req.params.id;
+    const school_id = req.user.id;
     const data = req.body;
-
     const result = await studentModel.updateStudent(id, school_id, data);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ msg: "No matching student found or data was already up to date." });
-    }
-
-    return res.json({ msg: "Updated successfully!", result });
+    res.json({ msg: "Updated successfully!", result });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(400).json({ error: err.message });
   }
 });
-
 
 router.delete("/deletestudent/:id", authenticateToken, async (req, res) => {
   try {
     const school_id = req.user.id;
     const result = await studentModel.deleteStudent(req.params.id, school_id);
-
-    res.json({ res: result, msg: "Deleted Successfully" });
+    res.json({ msg: "Deleted Successfully", result });
   } catch (err) {
-    res.status(500).json({ error: "Something went wrong" });
+    res.status(404).json({ error: err.message });
   }
 });
 

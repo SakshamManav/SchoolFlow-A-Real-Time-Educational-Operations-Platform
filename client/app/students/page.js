@@ -24,6 +24,7 @@ const StudentPage = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [allStudents, setAllStudents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false); // <-- Edit mode state
 
   // Form state for adding/updating student
   const [newStudent, setNewStudent] = useState({
@@ -87,34 +88,13 @@ const StudentPage = () => {
   };
 
   // On update, open the form with current info
-  const handleUpdate = (student_id) => {
-    const student = allStudents.find((s) => s.student_id === student_id);
+  const handleUpdate = (id) => {
+    const student = allStudents.find((s) => s.id === id);
     if (student) {
       setNewStudent(student);
+      setIsEditMode(true);
       setShowAddForm(true);
-      setShowPopup(false); // close view modal
-    }
-  };
-
-  // On delete, call API and refresh
-  const handleDelete = async (student_id) => {
-    if (window.confirm("Are you sure you want to delete this student?")) {
-      try {
-        await fetch(
-          `http://localhost:5001/student/deletestudent/${student_id}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        alert("Student deleted successfully!");
-        fetchStudents();
-        handleClosePopup();
-      } catch {
-        alert("Failed to delete student");
-      }
+      setShowPopup(false);
     }
   };
 
@@ -136,63 +116,85 @@ const StudentPage = () => {
       email: "",
       stud_pic_url: "",
     });
+    setIsEditMode(false);
     setShowAddForm(true);
   };
 
-  const handleCloseAddForm = () => {
-    setShowAddForm(false);
-    setNewStudent({
-      student_id: "",
-      student_name: "",
-      class: "",
-      section: "",
-      father_name: "",
-      mother_name: "",
-      dob: "",
-      gender: "",
-      contact_no: "",
-      admission_year: "",
-      prev_school_name: "",
-      address: "",
-      national_id: "",
-      email: "",
-      stud_pic_url: "",
+  // On delete, call API and refresh
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this student?")) {
+      try {
+        const res = await fetch(
+          `http://localhost:5001/student/deletestudent/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Failed to delete student");
+        }
+        alert("Student deleted successfully!");
+        fetchStudents();
+        handleClosePopup();
+      } catch (err) {
+        alert(err.message || "Failed to delete student");
+      }
+    }
+  };
+
+  // Explicit function for adding a student
+  const addStudent = async (studentData) => {
+    const res = await fetch("http://localhost:5001/student/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify(studentData),
     });
+    if (!res.ok) throw new Error("Failed to add student");
+    return res.json();
   };
 
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setNewStudent((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmitStudent = async (e) => {
-    e.preventDefault();
-    try {
-      const method = newStudent.student_id ? "PUT" : "POST";
-      const url = newStudent.student_id
-        ? `${API_BASE}/updatestudent/${newStudent.student_id}`
-        : `${API_BASE}/create`;
-      const res = await fetch(url, {
-        method,
+  // Explicit function for updating a student
+  const updateStudent = async (id, studentData) => {
+    const res = await fetch(
+      `http://localhost:5001/student/updatestudent/${id}`,
+      {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(newStudent),
-      });
-      if (!res.ok) throw new Error();
-      alert(
-        newStudent.student_id
-          ? "Student updated successfully!"
-          : "Student added successfully!"
-      );
+        body: JSON.stringify(studentData),
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to update student");
+    }
+    return res.json();
+  };
+
+  // On form submit, call the explicit function
+  const handleSubmitStudent = async (e) => {
+    e.preventDefault();
+    try {
+      if (isEditMode) {
+        await updateStudent(newStudent.id, newStudent);
+        alert("Student updated successfully!");
+      } else {
+        await addStudent(newStudent);
+        alert("Student added successfully!");
+      }
       fetchStudents();
       handleCloseAddForm();
-    } catch {
-      alert("Failed to submit student");
+    } catch (err) {
+      alert(err.message || "Failed to submit student");
     }
   };
 
@@ -292,7 +294,7 @@ const StudentPage = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {studentsToShow.map((student) => (
                       <tr
-                        key={student.student_id}
+                        key={student.id}
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -363,7 +365,7 @@ const StudentPage = () => {
             <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold text-white">
-                  {newStudent.student_id ? "Update Student" : "Add New Student"}
+                  {isEditMode ? "Update Student" : "Add New Student"}
                 </h3>
                 <button
                   onClick={handleCloseAddForm}
@@ -376,7 +378,25 @@ const StudentPage = () => {
 
             {/* Form Body */}
             <form className="p-6" onSubmit={handleSubmitStudent}>
+              {isEditMode && (
+                <input type="hidden" name="id" value={newStudent.id || ""} />
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Student ID */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Student ID *
+                  </label>
+                  <input
+                    type="text"
+                    name="student_id"
+                    value={newStudent.student_id}
+                    onChange={handleFormChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Enter student ID"
+                  />
+                </div>
                 {/* Student Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -613,7 +633,7 @@ const StudentPage = () => {
                   className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  {newStudent.student_id ? "Update Student" : "Add Student"}
+                  {isEditMode ? "Update Student" : "Add Student"}
                 </button>
               </div>
             </form>
