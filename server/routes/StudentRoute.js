@@ -15,6 +15,8 @@ router.post("/create", authenticateToken, async (req, res) => {
   }
 });
 
+// get all students of specific schools
+
 router.get("/getallstudents", authenticateToken, async (req, res) => {
   try {
     const school_id = req.user.id;

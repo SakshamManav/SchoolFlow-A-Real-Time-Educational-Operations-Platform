@@ -52,6 +52,9 @@ const StudentPage = () => {
     if (!localStorage.getItem("token")) {
       router.push("/login");
       return;
+    }else{
+      console.log(localStorage.getItem("token"))
+      console.log(localStorage.getItem("user"))
     }
     fetchStudents();
   }, []);
@@ -271,7 +274,7 @@ const StudentPage = () => {
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-4">ID</th>
+                      <th className="px-6 py-4">AG ID</th>
                       <th className="px-6 py-4">Student ID</th>
                       <th className="px-6 py-4">Name</th>
                       <th className="px-6 py-4">Father's Name</th>

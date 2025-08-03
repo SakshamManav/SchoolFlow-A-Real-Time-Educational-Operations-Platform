@@ -41,7 +41,6 @@ export default function Navbar() {
   //  const response = await fetch(`http://localhost:5001/schooluser/getuserbyid/{id}`)
   // }, []);
 
-  // Close mobile menu when screen size changes
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {

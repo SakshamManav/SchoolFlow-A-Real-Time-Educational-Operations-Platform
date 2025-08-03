@@ -1,29 +1,49 @@
 const db = require("../database/db");
-const {logFeeHistory} = require("./FeesHistory")
-async function createFee(data) {
+const { logFeeHistory } = require("./FeesHistory");
+
+async function createFee(data, school_id) {
   const {
-    student_id, school_id, fee_type, amount_paid,
-    payment_date, month_for, academic_year,
-    payment_mode, receipt_no, remarks
+    student_id,
+    fee_type,
+    amount_paid,
+    payment_date,
+    month_for,
+    academic_year,
+    payment_mode,
+    receipt_no,
+    remarks,
+    total_amount,
+    due_date,
+    discount,
+    fine
   } = data;
 
   const [result] = await db.execute(
-    `INSERT INTO fee_payments (
+    `INSERT INTO fees (
       student_id, school_id, fee_type, amount_paid,
       payment_date, month_for, academic_year,
       payment_mode, receipt_no, remarks,
-      created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      total_amount, due_date, discount, fine
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      student_id, school_id, fee_type, amount_paid,
-      payment_date, month_for, academic_year,
-      payment_mode, receipt_no, remarks
+      student_id,
+      school_id,
+      fee_type || null,
+      amount_paid  || null,
+      payment_date || null,
+      month_for || null,
+      academic_year || null,
+      payment_mode || null,
+      receipt_no || null,
+      remarks || null,
+      total_amount,
+      due_date || null,
+      discount || null,
+      fine || null
     ]
   );
 
-    await logFeeHistory(data);
-
-
+  // await logFeeHistory(data);
   return result;
 }
 
@@ -31,29 +51,54 @@ async function getAllFees() {
   const [rows] = await db.execute("SELECT * FROM fee_payments");
   return rows;
 }
+// by student and school_id
 
-async function getFeeById(id) {
-  const [rows] = await db.execute("SELECT * FROM fee_payments WHERE id = ?", [id]);
-  return rows[0];
+async function getFeeById(id, school_id) {
+  const [rows] = await db.execute("SELECT * FROM fee_payments WHERE student_id = ? and school_id = ?", [id, school_id]);
+  return rows;
 }
 
 async function updateFee(id, data) {
   const {
-    student_id, school_id, fee_type, amount_paid,
-    payment_date, month_for, academic_year,
-    payment_mode, receipt_no, remarks
+    student_id,
+    school_id,
+    fee_type,
+    amount_paid,
+    payment_date,
+    month_for,
+    academic_year,
+    payment_mode,
+    receipt_no,
+    remarks,
+    total_amount,
+    due_date,
+    discount,
+    fine
   } = data;
 
   const [result] = await db.execute(
     `UPDATE fee_payments SET
       student_id=?, school_id=?, fee_type=?, amount_paid=?,
       payment_date=?, month_for=?, academic_year=?,
-      payment_mode=?, receipt_no=?, remarks=?, updated_at=NOW()
+      payment_mode=?, receipt_no=?, remarks=?,
+      total_amount=?, due_date=?, discount=?, fine=?
     WHERE id=?`,
     [
-      student_id, school_id, fee_type, amount_paid,
-      payment_date, month_for, academic_year,
-      payment_mode, receipt_no, remarks, id
+      student_id,
+      school_id,
+      fee_type,
+      amount_paid,
+      payment_date,
+      month_for,
+      academic_year,
+      payment_mode,
+      receipt_no,
+      remarks,
+      total_amount,
+      due_date,
+      discount,
+      fine,
+      id
     ]
   );
 
