@@ -14,7 +14,6 @@ const TeachersPage = () => {
     'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Physical Education'
   ];
 
-  // Dummy teachers data
   const allTeachers = [
     {
       id: 'TCH001',

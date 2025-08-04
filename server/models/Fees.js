@@ -18,6 +18,12 @@ async function createFee(data, school_id) {
     fine
   } = data;
 
+  // Ensure numeric fields are numbers, default to 0
+  const sanitizedTotalAmount = typeof total_amount === 'number' ? total_amount : 0;
+  const sanitizedAmountPaid = typeof amount_paid === 'number' ? amount_paid : 0;
+  const sanitizedDiscount = typeof discount === 'number' ? discount : 0;
+  const sanitizedFine = typeof fine === 'number' ? fine : 0;
+
   const [result] = await db.execute(
     `INSERT INTO fees (
       student_id, school_id, fee_type, amount_paid,
@@ -29,33 +35,54 @@ async function createFee(data, school_id) {
       student_id,
       school_id,
       fee_type || null,
-      amount_paid  || null,
+      sanitizedAmountPaid,
       payment_date || null,
       month_for || null,
       academic_year || null,
       payment_mode || null,
       receipt_no || null,
       remarks || null,
-      total_amount,
+      sanitizedTotalAmount,
       due_date || null,
-      discount || null,
-      fine || null
+      sanitizedDiscount,
+      sanitizedFine
     ]
   );
 
-  // await logFeeHistory(data);
+  await logFeeHistory({
+    ...data,
+    total_amount: sanitizedTotalAmount,
+    amount_paid: sanitizedAmountPaid,
+    discount: sanitizedDiscount,
+    fine: sanitizedFine
+  });
   return result;
 }
 
 async function getAllFees() {
-  const [rows] = await db.execute("SELECT * FROM fee_payments");
-  return rows;
+  const [rows] = await db.execute("SELECT * FROM fees");
+  // Sanitize numeric fields
+  return rows.map(row => ({
+    ...row,
+    total_amount: row.total_amount ?? 0,
+    amount_paid: row.amount_paid ?? 0,
+    discount: row.discount ?? 0,
+    fine: row.fine ?? 0,
+    balance: row.balance ?? ((row.total_amount ?? 0) - (row.amount_paid ?? 0))
+  }));
 }
-// by student and school_id
 
 async function getFeeById(id, school_id) {
-  const [rows] = await db.execute("SELECT * FROM fee_payments WHERE student_id = ? and school_id = ?", [id, school_id]);
-  return rows;
+  const [rows] = await db.execute("SELECT * FROM fees WHERE student_id = ? AND school_id = ?", [id, school_id]);
+  // Sanitize numeric fields
+  return rows.map(row => ({
+    ...row,
+    total_amount: row.total_amount ?? 0,
+    amount_paid: row.amount_paid ?? 0,
+    discount: row.discount ?? 0,
+    fine: row.fine ?? 0,
+    balance: row.balance ?? ((row.total_amount ?? 0) - (row.amount_paid ?? 0))
+  }));
 }
 
 async function updateFee(id, data) {
@@ -76,8 +103,14 @@ async function updateFee(id, data) {
     fine
   } = data;
 
+  // Ensure numeric fields are numbers
+  const sanitizedTotalAmount = typeof total_amount === 'number' ? total_amount : 0;
+  const sanitizedAmountPaid = typeof amount_paid === 'number' ? amount_paid : 0;
+  const sanitizedDiscount = typeof discount === 'number' ? discount : 0;
+  const sanitizedFine = typeof fine === 'number' ? fine : 0;
+
   const [result] = await db.execute(
-    `UPDATE fee_payments SET
+    `UPDATE fees SET
       student_id=?, school_id=?, fee_type=?, amount_paid=?,
       payment_date=?, month_for=?, academic_year=?,
       payment_mode=?, receipt_no=?, remarks=?,
@@ -87,17 +120,17 @@ async function updateFee(id, data) {
       student_id,
       school_id,
       fee_type,
-      amount_paid,
+      sanitizedAmountPaid,
       payment_date,
       month_for,
       academic_year,
       payment_mode,
       receipt_no,
       remarks,
-      total_amount,
+      sanitizedTotalAmount,
       due_date,
-      discount,
-      fine,
+      sanitizedDiscount,
+      sanitizedFine,
       id
     ]
   );
@@ -106,7 +139,7 @@ async function updateFee(id, data) {
 }
 
 async function deleteFee(id) {
-  const [result] = await db.execute("DELETE FROM fee_payments WHERE id = ?", [id]);
+  const [result] = await db.execute("DELETE FROM fees WHERE id = ?", [id]);
   return result;
 }
 

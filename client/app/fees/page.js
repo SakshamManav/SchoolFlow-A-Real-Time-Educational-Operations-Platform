@@ -1,11 +1,13 @@
+
 "use client";
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Calendar, DollarSign, History, User, Hash, FileText, Trash2 } from 'lucide-react';
+import { CreditCard, Calendar, DollarSign, History, User, Hash, FileText, Trash2, Search, Printer } from 'lucide-react';
 import { useRouter } from "next/navigation";
 
 const FeesPage = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedStudent, setSelectedStudent] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     month_for: '',
     payment_date: '',
@@ -19,6 +21,7 @@ const FeesPage = () => {
     due_date: '',
     discount: 0,
     fine: 0,
+    school_id: '',
   });
   const [classes, setClasses] = useState([
     'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
@@ -107,13 +110,15 @@ const FeesPage = () => {
     console.log('studentsInClass:', studentsInClass);
     console.log('Selected student:', selectedStudent);
     console.log('Current student:', currentStudent);
-  }, [selectedClass, selectedStudent]);
+    console.log('Search term:', searchTerm);
+  }, [selectedClass, selectedStudent, searchTerm]);
 
   const handleClassChange = (e) => {
     const newClass = e.target.value;
     console.log('Class changed to:', newClass);
     setSelectedClass(newClass);
     setSelectedStudent('');
+    setSearchTerm('');
     setFormData({
       month_for: '',
       payment_date: new Date().toISOString().split('T')[0],
@@ -127,6 +132,7 @@ const FeesPage = () => {
       due_date: '',
       discount: 0,
       fine: 0,
+      school_id: '',
     });
     setFeeHistory([]);
   };
@@ -148,7 +154,15 @@ const FeesPage = () => {
       due_date: '',
       discount: 0,
       fine: 0,
+      school_id: '',
     });
+  };
+
+  const handleSearchChange = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    setSelectedStudent('');
+    console.log('Search term changed to:', term);
   };
 
   const handleFormChange = (e) => {
@@ -161,7 +175,7 @@ const FeesPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.month_for || !formData.payment_date || !formData.total_amount || !formData.amount_paid || !formData.fee_type || !formData.payment_mode ) {
+    if (!formData.month_for || !formData.payment_date || !formData.total_amount || !formData.amount_paid || !formData.fee_type || !formData.payment_mode || !formData.school_id) {
       setError('Please fill all required fields');
       return;
     }
@@ -177,6 +191,7 @@ const FeesPage = () => {
         },
         body: JSON.stringify({
           student_id: selectedStudent,
+          school_id: formData.school_id,
           fee_type: formData.fee_type,
           month_for: formData.month_for,
           academic_year: formData.academic_year,
@@ -221,6 +236,7 @@ const FeesPage = () => {
         due_date: '',
         discount: 0,
         fine: 0,
+        school_id: '',
       });
     } catch (err) {
       console.error('Create fee error:', err);
@@ -264,6 +280,178 @@ const FeesPage = () => {
     }
   };
 
+  const printFeeHistory = (record = null) => {
+    const recordsToPrint = record ? [record] : feeHistory;
+    if (!recordsToPrint.length || !currentStudent) {
+      alert('No fee records to print.');
+      return;
+    }
+
+    // Retrieve school info from localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const schoolName = user.name || 'Unknown School';
+    const schoolEmail = user.email || '-';
+    const schoolPhone = user.phone || '-';
+    const schoolAddress = user.address || '-';
+
+    // Create hidden iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    // Write print content to iframe
+    const printContent = `
+      <html>
+        <head>
+          <title>Fee Receipt</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              color: #333;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 20px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 28px;
+              color: #000;
+            }
+            .header p {
+              margin: 5px 0;
+              font-size: 14px;
+            }
+            .student-info {
+              margin-bottom: 20px;
+              border-bottom: 2px solid #000;
+              padding-bottom: 10px;
+            }
+            .student-info .grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 10px;
+              font-size: 14px;
+            }
+            .student-info p {
+              margin: 5px 0;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+              font-size: 12px;
+            }
+            th, td {
+              border: 1px solid #000;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            @media print {
+              body {
+                margin: 0;
+              }
+              .no-print {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${schoolName}</h1>
+            <p>${schoolAddress}</p>
+            <p>Email: ${schoolEmail} | Phone: ${schoolPhone}</p>
+            <p>Fee Receipt - Generated on: ${new Date().toLocaleDateString('en-IN')}</p>
+          </div>
+          <div class="student-info">
+            <div class="grid">
+              <p><strong>Student Name:</strong> ${currentStudent.student_name || '-'}</p>
+              <p><strong>Student ID:</strong> ${currentStudent.student_id || '-'}</p>
+              <p><strong>Class:</strong> ${selectedClass || '-'}</p>
+              <p><strong>Section:</strong> ${currentStudent.section || '-'}</p>
+              <p><strong>Father's Name:</strong> ${currentStudent.father_name || '-'}</p>
+              <p><strong>Mother's Name:</strong> ${currentStudent.mother_name || '-'}</p>
+              <p><strong>Date of Birth:</strong> ${currentStudent.dob ? new Date(currentStudent.dob).toLocaleDateString('en-IN') : '-'}</p>
+              <p><strong>Gender:</strong> ${currentStudent.gender || '-'}</p>
+              <p><strong>Contact No:</strong> ${currentStudent.contact_no || '-'}</p>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Fee Type</th>
+                <th>Payment Date</th>
+                <th>Total Amount (₹)</th>
+                <th>Paid Amount (₹)</th>
+                <th>Balance (₹)</th>
+                <th>Discount (₹)</th>
+                <th>Fine (₹)</th>
+                <th>Payment Mode</th>
+                <th>Receipt No</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recordsToPrint.map(record => {
+                const totalAmount = typeof record.total_amount === 'number' ? record.total_amount : parseFloat(record.total_amount) || 0;
+                const amountPaid = typeof record.amount_paid === 'number' ? record.amount_paid : parseFloat(record.amount_paid) || 0;
+                const discount = typeof record.discount === 'number' ? record.discount : parseFloat(record.discount) || 0;
+                const fine = typeof record.fine === 'number' ? record.fine : parseFloat(record.fine) || 0;
+                const balance = record.balance !== undefined && typeof record.balance === 'number'
+                  ? record.balance
+                  : (totalAmount - amountPaid);
+                return `
+                  <tr>
+                    <td>${record.month_for || '-'}</td>
+                    <td>${record.fee_type || '-'}</td>
+                    <td>${record.payment_date ? new Date(record.payment_date).toLocaleDateString('en-IN') : '-'}</td>
+                    <td>${totalAmount.toLocaleString()}</td>
+                    <td>${amountPaid.toLocaleString()}</td>
+                    <td>${balance.toLocaleString()}</td>
+                    <td>${discount > 0 ? discount.toLocaleString() : '-'}</td>
+                    <td>${fine > 0 ? fine.toLocaleString() : '-'}</td>
+                    <td>${record.payment_mode || '-'}</td>
+                    <td>${record.receipt_no || '-'}</td>
+                    <td>${record.remarks || '-'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    // Write content to iframe and trigger print
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(printContent);
+    iframeDoc.close();
+
+    // Ensure content is loaded before printing
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        // Remove iframe after printing
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000); // Delay to allow print dialog to appear
+      } catch (err) {
+        console.error('Print error:', err);
+        document.body.removeChild(iframe);
+        alert('Error triggering print: ' + err.message);
+      }
+    };
+  };
+
   // Map selected class (e.g., "Class 8") to numerical value (e.g., 8)
   const getClassNumber = (className) => {
     if (!className) return null;
@@ -281,15 +469,24 @@ const FeesPage = () => {
       })
     : [];
 
-  const currentStudent = studentsInClass.find(s => s.id.toString() === selectedStudent);
+  // Filter students by search term (student_id)
+  const filteredStudents = searchTerm
+    ? studentsInClass.filter(student =>
+        student.student_id.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : studentsInClass;
+
+  const currentStudent = filteredStudents.find(s => s.id.toString() === selectedStudent);
 
   const getStatusColor = (amount, paidAmount) => {
+    if (typeof amount !== 'number' || typeof paidAmount !== 'number') return 'bg-red-100 text-red-800';
     if (paidAmount >= amount) return 'bg-green-100 text-green-800';
     if (paidAmount > 0) return 'bg-yellow-100 text-yellow-800';
     return 'bg-red-100 text-red-800';
   };
 
   const getStatusText = (amount, paidAmount) => {
+    if (typeof amount !== 'number' || typeof paidAmount !== 'number') return 'Invalid';
     if (paidAmount >= amount) return 'Paid';
     if (paidAmount > 0) return 'Partial';
     return 'Pending';
@@ -357,6 +554,17 @@ const FeesPage = () => {
               <label htmlFor="student-select" className="block text-sm font-medium text-gray-700 mb-2">
                 Select Student
               </label>
+              <div className="relative mb-3">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  placeholder="Search by Student ID..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 pl-10"
+                  disabled={!selectedClass}
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+              </div>
               <select
                 id="student-select"
                 value={selectedStudent}
@@ -365,11 +573,17 @@ const FeesPage = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">Choose a student...</option>
-                {studentsInClass.map((student) => (
-                  <option key={student.id} value={student.id.toString()}>
-                    {student.student_name} (ID: {student.student_id})
+                {filteredStudents.length > 0 ? (
+                  filteredStudents.map((student) => (
+                    <option key={student.id} value={student.id.toString()}>
+                      {student.student_name} (ID: {student.student_id})
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>
+                    No students found
                   </option>
-                ))}
+                )}
               </select>
             </div>
           </div>
@@ -482,7 +696,23 @@ const FeesPage = () => {
                     </select>
                   </div>
 
-                
+                  {/* School ID */}
+                  <div>
+                    <label htmlFor="school_id" className="block text-sm font-medium text-gray-700 mb-2">
+                      School ID *
+                    </label>
+                    <input
+                      type="text"
+                      id="school_id"
+                      name="school_id"
+                      value={formData.school_id}
+                      onChange={handleFormChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      placeholder="Enter school ID"
+                    />
+                  </div>
+
                   {/* Submission Date */}
                   <div>
                     <label htmlFor="payment_date" className="block text-sm font-medium text-gray-700 mb-2">
@@ -635,19 +865,46 @@ const FeesPage = () => {
 
             {/* Fee History */}
             <div className="bg-white rounded-xl shadow-lg overflow-y-auto max-h-[600px]">
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-white flex items-center gap-2">
                   <History className="w-5 h-5" />
                   Fee History
                 </h2>
+                {feeHistory.length > 0 && (
+                  <button
+                    onClick={() => printFeeHistory()}
+                    className="bg-white text-indigo-600 hover:bg-gray-100 font-semibold py-2 px-4 rounded-lg flex items-center gap-2"
+                  >
+                    <Printer className="w-5 h-5" />
+                    Print All
+                  </button>
+                )}
               </div>
               
               <div className="p-6">
                 {feeHistory.length > 0 ? (
                   <div className="space-y-4">
                     {feeHistory.map((record) => {
-                      // Calculate balance if not provided by backend
-                      const balance = record.balance !== undefined ? record.balance : (record.total_amount - record.amount_paid);
+                      // Validate numeric fields
+                      console.log('Fee record:', record);
+                      const totalAmount = typeof record.total_amount === 'number' ? record.total_amount : parseFloat(record.total_amount) || 0;
+                      const amountPaid = typeof record.amount_paid === 'number' ? record.amount_paid : parseFloat(record.amount_paid) || 0;
+                      const discount = typeof record.discount === 'number' ? record.discount : parseFloat(record.discount) || 0;
+                      const fine = typeof record.fine === 'number' ? record.fine : parseFloat(record.fine) || 0;
+                      const balance = record.balance !== undefined && typeof record.balance === 'number'
+                        ? record.balance
+                        : (totalAmount - amountPaid);
+
+                      // Check for invalid data
+                      if (isNaN(totalAmount) || isNaN(amountPaid) || isNaN(balance)) {
+                        console.error('Invalid fee record:', record);
+                        return (
+                          <div key={record.id} className="border border-red-200 rounded-lg p-4">
+                            <p className="text-red-600">Error: Invalid fee data for {record.month_for || 'Unknown Month'}</p>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div key={record.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                           <div className="flex justify-between items-start mb-3">
@@ -659,9 +916,16 @@ const FeesPage = () => {
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(record.total_amount, record.amount_paid)}`}>
-                                {getStatusText(record.total_amount, record.amount_paid)}
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(totalAmount, amountPaid)}`}>
+                                {getStatusText(totalAmount, amountPaid)}
                               </span>
+                              <button
+                                onClick={() => printFeeHistory(record)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="Print Fee Record"
+                              >
+                                <Printer className="w-5 h-5" />
+                              </button>
                               <button
                                 onClick={() => handleDelete(record.id)}
                                 className="text-red-600 hover:text-red-800"
@@ -683,11 +947,11 @@ const FeesPage = () => {
                             </div>
                             <div>
                               <span className="text-gray-600">Total Amount:</span>
-                              <p className="font-semibold text-gray-900">₹{record.total_amount.toLocaleString()}</p>
+                              <p className="font-semibold text-gray-900">₹{totalAmount.toLocaleString()}</p>
                             </div>
                             <div>
                               <span className="text-gray-600">Paid Amount:</span>
-                              <p className="font-semibold text-gray-900">₹{record.amount_paid.toLocaleString()}</p>
+                              <p className="font-semibold text-gray-900">₹{amountPaid.toLocaleString()}</p>
                             </div>
                             <div>
                               <span className="text-gray-600">Balance:</span>
@@ -695,16 +959,16 @@ const FeesPage = () => {
                                 ₹{balance.toLocaleString()}
                               </p>
                             </div>
-                            {record.discount > 0 && (
+                            {discount > 0 && (
                               <div>
                                 <span className="text-gray-600">Discount:</span>
-                                <p className="font-semibold text-gray-900">₹{record.discount.toLocaleString()}</p>
+                                <p className="font-semibold text-gray-900">₹{discount.toLocaleString()}</p>
                               </div>
                             )}
-                            {record.fine > 0 && (
+                            {fine > 0 && (
                               <div>
                                 <span className="text-gray-600">Fine:</span>
-                                <p className="font-semibold text-gray-900">₹{record.fine.toLocaleString()}</p>
+                                <p className="font-semibold text-gray-900">₹{fine.toLocaleString()}</p>
                               </div>
                             )}
                             {record.receipt_no && (
