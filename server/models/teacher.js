@@ -48,7 +48,7 @@ const teacherQueries = {
              profile_pic_url, joining_date, salary, role, is_active,
              last_login, created_at, updated_at
       FROM teacher
-      WHERE id = ? AND school_id = ? AND is_active = true
+      WHERE id = ? AND school_id = ?
     `;
     const [rows] = await db.query(query, [id, school_id]);
     return rows[0];
@@ -67,7 +67,7 @@ const teacherQueries = {
           address = ?, qualification = ?, experience_years = ?,
           subject_specialty = ?, class_assigned = ?, 
           profile_pic_url = ?, joining_date = ?, salary = ?, role = ?
-      WHERE id = ? AND school_id = ? AND is_active = true
+      WHERE id = ? AND school_id = ? 
     `;
     const values = [
       name, email, phone, gender, dob, address, qualification,
@@ -81,9 +81,8 @@ const teacherQueries = {
   // Delete teacher (soft delete)
   async deleteTeacher(db, id, school_id) {
     const query = `
-      UPDATE teacher
-      SET is_active = false
-      WHERE id = ? AND school_id = ? AND is_active = true
+      Delete from teacher
+      WHERE id = ? AND school_id = ? 
     `;
     const [result] = await db.query(query, [id, school_id]);
     return result.affectedRows;
