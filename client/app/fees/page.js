@@ -1,8 +1,7 @@
-
 "use client";
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Calendar, DollarSign, History, User, Hash, FileText, Trash2, Search, Printer } from 'lucide-react';
-import { useRouter } from "next/navigation";
+import AuthWrapper from '../components/AuthWrapper';
 
 const FeesPage = () => {
   const [selectedClass, setSelectedClass] = useState('');
@@ -10,7 +9,7 @@ const FeesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     month_for: '',
-    payment_date: '',
+    payment_date: new Date().toISOString().split('T')[0],
     total_amount: '',
     amount_paid: '',
     fee_type: '',
@@ -23,7 +22,7 @@ const FeesPage = () => {
     fine: 0,
     school_id: '',
   });
-  const [classes, setClasses] = useState([
+  const [classes] = useState([
     'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
     'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
     'Class 11', 'Class 12'
@@ -32,17 +31,9 @@ const FeesPage = () => {
   const [feeHistory, setFeeHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
+
   const STUDENT_API_BASE_URL = 'http://localhost:5001/student';
   const FEES_API_BASE_URL = 'http://localhost:5001/fees';
-
-  // Check authentication on mount
-  useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      router.push("/login");
-      return;
-    }
-  }, [router]);
 
   // Fetch all students
   useEffect(() => {
@@ -209,9 +200,17 @@ const FeesPage = () => {
 
       const data = await response.json();
       console.log('Create fee response:', data);
-      if (!data.success) throw new Error(data.message || 'Failed to create fee');
+      if (!data.success) {
+        if (data.message === 'Invalid or expired token') {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          router.replace("/login");
+          return;
+        }
+        throw new Error(data.message || 'Failed to create fee');
+      }
       alert('Fee record submitted successfully!');
-      
+
       // Refresh fee history
       const historyResponse = await fetch(`${FEES_API_BASE_URL}/getfees/${selectedStudent}`, {
         headers: {
@@ -260,8 +259,16 @@ const FeesPage = () => {
       });
       const data = await response.json();
       console.log('Delete fee response:', data);
-      if (!data.success) throw new Error(data.message || 'Failed to delete fee');
-      
+      if (!data.success) {
+        if (data.message === 'Invalid or expired token') {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          router.replace("/login");
+          return;
+        }
+        throw new Error(data.message || 'Failed to delete fee');
+      }
+
       // Refresh fee history
       const historyResponse = await fetch(`${FEES_API_BASE_URL}/getfees/${selectedStudent}`, {
         headers: {
@@ -303,7 +310,7 @@ const FeesPage = () => {
     const printContent = `
       <html>
         <head>
-          <title>Fee Receipt</title>
+          <title>Fee Receipt - ${currentStudent.student_name}</title>
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -440,10 +447,7 @@ const FeesPage = () => {
       try {
         iframe.contentWindow.focus();
         iframe.contentWindow.print();
-        // Remove iframe after printing
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 1000); // Delay to allow print dialog to appear
+        setTimeout(() => document.body.removeChild(iframe), 1000);
       } catch (err) {
         console.error('Print error:', err);
         document.body.removeChild(iframe);
@@ -452,7 +456,7 @@ const FeesPage = () => {
     };
   };
 
-  // Map selected class (e.g., "Class 8") to numerical value (e.g., 8)
+  // Map selected class to numerical value
   const getClassNumber = (className) => {
     if (!className) return null;
     const match = className.match(/\d+/);
@@ -469,7 +473,7 @@ const FeesPage = () => {
       })
     : [];
 
-  // Filter students by search term (student_id)
+  // Filter students by search term
   const filteredStudents = searchTerm
     ? studentsInClass.filter(student =>
         student.student_id.toString().toLowerCase().includes(searchTerm.toLowerCase())
@@ -501,515 +505,471 @@ const FeesPage = () => {
   const paymentModes = ['Cash', 'Card', 'Online', 'UPI', 'Bank Transfer'];
 
   return (
-    <div
-      className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4"
-      suppressHydrationWarning={true}
-    >
-      <div className="max-w-7xl mx-auto">
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-
-        {/* Loading Indicator */}
-        {loading && (
-          <div className="bg-blue-100 text-blue-800 p-4 rounded-lg mb-6">
-            Loading...
-          </div>
-        )}
-
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center gap-3 mb-6">
-            <CreditCard className="w-8 h-8 text-emerald-600" />
-            <h1 className="text-3xl font-bold text-gray-800">Fees Management</h1>
-          </div>
-          
-          {/* Dropdowns */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Class Selection */}
-            <div>
-              <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-2">
-                Select Class
-              </label>
-              <select
-                id="class-select"
-                value={selectedClass}
-                onChange={handleClassChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900"
-              >
-                <option value="">Choose a class...</option>
-                {classes.map((cls) => (
-                  <option key={cls} value={cls}>
-                    {cls}
-                  </option>
-                ))}
-              </select>
+    <AuthWrapper>
+      <div
+        className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4"
+        suppressHydrationWarning={true}
+      >
+        <div className="max-w-7xl mx-auto">
+          {error && (
+            <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-6">
+              {error}
             </div>
-
-            {/* Student Selection */}
-            <div>
-              <label htmlFor="student-select" className="block text-sm font-medium text-gray-700 mb-2">
-                Select Student
-              </label>
-              <div className="relative mb-3">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  placeholder="Search by Student ID..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 pl-10"
-                  disabled={!selectedClass}
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
-              </div>
-              <select
-                id="student-select"
-                value={selectedStudent}
-                onChange={handleStudentChange}
-                disabled={!selectedClass}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">Choose a student...</option>
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => (
-                    <option key={student.id} value={student.id.toString()}>
-                      {student.student_name} (ID: {student.student_id})
+          )}
+          {loading && (
+            <div className="bg-blue-100 text-blue-800 p-4 rounded-lg mb-6">
+              Loading...
+            </div>
+          )}
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <CreditCard className="w-8 h-8 text-emerald-600" />
+              <h1 className="text-3xl font-bold text-gray-800">Fees Management</h1>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Class
+                </label>
+                <select
+                  id="class-select"
+                  value={selectedClass}
+                  onChange={handleClassChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900"
+                >
+                  <option value="">Choose a class...</option>
+                  {classes.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
                     </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    No students found
-                  </option>
-                )}
-              </select>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="student-select" className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Student
+                </label>
+                <div className="relative mb-3">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    placeholder="Search by Student ID..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 pl-10"
+                    disabled={!selectedClass}
+                  />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                </div>
+                <select
+                  id="student-select"
+                  value={selectedStudent}
+                  onChange={handleStudentChange}
+                  disabled={!selectedClass}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">Choose a student...</option>
+                  {filteredStudents.length > 0 ? (
+                    filteredStudents.map((student) => (
+                      <option key={student.id} value={student.id.toString()}>
+                        {student.student_name} (ID: {student.student_id})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>
+                      No students found
+                    </option>
+                  )}
+                </select>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Fee Submission Form */}
-        {selectedStudent && currentStudent && (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4">
-                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Fee Submission Form
-                </h2>
-              </div>
-              
-              <div className="p-6">
-                {/* Student Info Display */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Hash className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <span className="font-medium text-gray-600">Student ID:</span>
-                        <p className="font-semibold text-gray-900">{currentStudent.id}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <span className="font-medium text-gray-600">Name:</span>
-                        <p className="font-semibold text-gray-900">{currentStudent.student_name}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Hash className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <span className="font-medium text-gray-600">Student ID:</span>
-                        <p className="font-semibold text-gray-900">{currentStudent.student_id}</p>
-                      </div>
-                    </div>
-                  </div>
+          {selectedStudent && currentStudent && (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4">
+                  <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Fee Submission Form
+                  </h2>
                 </div>
-
-                {/* Fee Form */}
-                <div className="space-y-6">
-                  {/* Month Selection */}
-                  <div>
-                    <label htmlFor="month_for" className="block text-sm font-medium text-gray-700 mb-2">
-                      Month *
-                    </label>
-                    <select
-                      id="month_for"
-                      name="month_for"
-                      value={formData.month_for}
-                      onChange={handleFormChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    >
-                      <option value="">Select month...</option>
-                      {months.map((month) => (
-                        <option key={month} value={month}>
-                          {month}
-                        </option>
-                      ))}
-                    </select>
+                <div className="p-6">
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Hash className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <span className="font-medium text-gray-600">Student ID:</span>
+                          <p className="font-semibold text-gray-900">{currentStudent.id}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <span className="font-medium text-gray-600">Name:</span>
+                          <p className="font-semibold text-gray-900">{currentStudent.student_name}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Hash className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <span className="font-medium text-gray-600">Student ID:</span>
+                          <p className="font-semibold text-gray-900">{currentStudent.student_id}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-
-                  {/* Fee Type */}
-                  <div>
-                    <label htmlFor="fee_type" className="block text-sm font-medium text-gray-700 mb-2">
-                      Fee Type *
-                    </label>
-                    <select
-                      id="fee_type"
-                      name="fee_type"
-                      value={formData.fee_type}
-                      onChange={handleFormChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    >
-                      <option value="">Select fee type...</option>
-                      {feeTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Payment Mode */}
-                  <div>
-                    <label htmlFor="payment_mode" className="block text-sm font-medium text-gray-700 mb-2">
-                      Payment Mode *
-                    </label>
-                    <select
-                      id="payment_mode"
-                      name="payment_mode"
-                      value={formData.payment_mode}
-                      onChange={handleFormChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    >
-                      <option value="">Select payment mode...</option>
-                      {paymentModes.map((mode) => (
-                        <option key={mode} value={mode}>
-                          {mode}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* School ID */}
-                  <div>
-                    <label htmlFor="school_id" className="block text-sm font-medium text-gray-700 mb-2">
-                      School ID *
-                    </label>
-                    <input
-                      type="text"
-                      id="school_id"
-                      name="school_id"
-                      value={formData.school_id}
-                      onChange={handleFormChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                      placeholder="Enter school ID"
-                    />
-                  </div>
-
-                  {/* Submission Date */}
-                  <div>
-                    <label htmlFor="payment_date" className="block text-sm font-medium text-gray-700 mb-2">
-                      Submission Date *
-                    </label>
-                    <input
-                      type="date"
-                      id="payment_date"
-                      name="payment_date"
-                      value={formData.payment_date}
-                      onChange={handleFormChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  {/* Due Date */}
-                  <div>
-                    <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 mb-2">
-                      Due Date
-                    </label>
-                    <input
-                      type="date"
-                      id="due_date"
-                      name="due_date"
-                      value={formData.due_date}
-                      onChange={handleFormChange}
-                      className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    />
-                  </div>
-
-                  {/* Amount Fields */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-6">
                     <div>
-                      <label htmlFor="total_amount" className="block text-sm font-medium text-gray-700 mb-2">
-                        Total Amount (₹) *
+                      <label htmlFor="month_for" className="block text-sm font-medium text-gray-700 mb-2">
+                        Month *
                       </label>
-                      <input
-                        type="number"
-                        id="total_amount"
-                        name="total_amount"
-                        value={formData.total_amount}
+                      <select
+                        id="month_for"
+                        name="month_for"
+                        value={formData.month_for}
                         onChange={handleFormChange}
                         required
-                        min="0"
-                        step="0.01"
                         className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                        placeholder="5000"
-                      />
+                      >
+                        <option value="">Select month...</option>
+                        {months.map((month) => (
+                          <option key={month} value={month}>
+                            {month}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
-                      <label htmlFor="amount_paid" className="block text-sm font-medium text-gray-700 mb-2">
-                        Paid Amount (₹) *
+                      <label htmlFor="fee_type" className="block text-sm font-medium text-gray-700 mb-2">
+                        Fee Type *
                       </label>
-                      <input
-                        type="number"
-                        id="amount_paid"
-                        name="amount_paid"
-                        value={formData.amount_paid}
+                      <select
+                        id="fee_type"
+                        name="fee_type"
+                        value={formData.fee_type}
                         onChange={handleFormChange}
                         required
-                        min="0"
-                        step="0.01"
                         className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                        placeholder="5000"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Discount and Fine */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="discount" className="block text-sm font-medium text-gray-700 mb-2">
-                        Discount (₹)
-                      </label>
-                      <input
-                        type="number"
-                        id="discount"
-                        name="discount"
-                        value={formData.discount}
-                        onChange={handleFormChange}
-                        min="0"
-                        step="0.01"
-                        className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                        placeholder="0"
-                      />
+                      >
+                        <option value="">Select fee type...</option>
+                        {feeTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
-                      <label htmlFor="fine" className="block text-sm font-medium text-gray-700 mb-2">
-                        Fine (₹)
+                      <label htmlFor="payment_mode" className="block text-sm font-medium text-gray-700 mb-2">
+                        Payment Mode *
+                      </label>
+                      <select
+                        id="payment_mode"
+                        name="payment_mode"
+                        value={formData.payment_mode}
+                        onChange={handleFormChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      >
+                        <option value="">Select payment mode...</option>
+                        {paymentModes.map((mode) => (
+                          <option key={mode} value={mode}>
+                            {mode}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="school_id" className="block text-sm font-medium text-gray-700 mb-2">
+                        School ID *
                       </label>
                       <input
-                        type="number"
-                        id="fine"
-                        name="fine"
-                        value={formData.fine}
+                        type="text"
+                        id="school_id"
+                        name="school_id"
+                        value={formData.school_id}
                         onChange={handleFormChange}
-                        min="0"
-                        step="0.01"
+                        required
                         className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                        placeholder="0"
+                        placeholder="Enter school ID"
                       />
                     </div>
+                    <div>
+                      <label htmlFor="payment_date" className="block text-sm font-medium text-gray-700 mb-2">
+                        Submission Date *
+                      </label>
+                      <input
+                        type="date"
+                        id="payment_date"
+                        name="payment_date"
+                        value={formData.payment_date}
+                        onChange={handleFormChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 mb-2">
+                        Due Date
+                      </label>
+                      <input
+                        type="date"
+                        id="due_date"
+                        name="due_date"
+                        value={formData.due_date}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="total_amount" className="block text-sm font-medium text-gray-700 mb-2">
+                          Total Amount (₹) *
+                        </label>
+                        <input
+                          type="number"
+                          id="total_amount"
+                          name="total_amount"
+                          value={formData.total_amount}
+                          onChange={handleFormChange}
+                          required
+                          min="0"
+                          step="0.01"
+                          className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder="5000"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="amount_paid" className="block text-sm font-medium text-gray-700 mb-2">
+                          Paid Amount (₹) *
+                        </label>
+                        <input
+                          type="number"
+                          id="amount_paid"
+                          name="amount_paid"
+                          value={formData.amount_paid}
+                          onChange={handleFormChange}
+                          required
+                          min="0"
+                          step="0.01"
+                          className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder="5000"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="discount" className="block text-sm font-medium text-gray-700 mb-2">
+                          Discount (₹)
+                        </label>
+                        <input
+                          type="number"
+                          id="discount"
+                          name="discount"
+                          value={formData.discount}
+                          onChange={handleFormChange}
+                          min="0"
+                          step="0.01"
+                          className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="fine" className="block text-sm font-medium text-gray-700 mb-2">
+                          Fine (₹)
+                        </label>
+                        <input
+                          type="number"
+                          id="fine"
+                          name="fine"
+                          value={formData.fine}
+                          onChange={handleFormChange}
+                          min="0"
+                          step="0.01"
+                          className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="receipt_no" className="block text-sm font-medium text-gray-700 mb-2">
+                        Receipt Number
+                      </label>
+                      <input
+                        type="text"
+                        id="receipt_no"
+                        name="receipt_no"
+                        value={formData.receipt_no}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        placeholder="REC-XXXX"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-2">
+                        Remarks
+                      </label>
+                      <textarea
+                        id="remarks"
+                        name="remarks"
+                        value={formData.remarks}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        rows="4"
+                        placeholder="Any additional notes..."
+                      />
+                    </div>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:bg-emerald-400 disabled:cursor-not-allowed"
+                    >
+                      <DollarSign className="w-5 h-5" />
+                      Submit Fee Record
+                    </button>
                   </div>
-
-                  {/* Receipt Number */}
-                  <div>
-                    <label htmlFor="receipt_no" className="block text-sm font-medium text-gray-700 mb-2">
-                      Receipt Number
-                    </label>
-                    <input
-                      type="text"
-                      id="receipt_no"
-                      name="receipt_no"
-                      value={formData.receipt_no}
-                      onChange={handleFormChange}
-                      className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                      placeholder="REC-XXXX"
-                    />
-                  </div>
-
-                  {/* Remarks */}
-                  <div>
-                    <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-2">
-                      Remarks
-                    </label>
-                    <textarea
-                      id="remarks"
-                      name="remarks"
-                      value={formData.remarks}
-                      onChange={handleFormChange}
-                      className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                      rows="4"
-                      placeholder="Any additional notes..."
-                    />
-                  </div>
-
-                  {/* Submit Button */}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:bg-emerald-400 disabled:cursor-not-allowed"
-                  >
-                    <DollarSign className="w-5 h-5" />
-                    Submit Fee Record
-                  </button>
                 </div>
               </div>
-            </div>
+              <div className="bg-white rounded-xl shadow-lg overflow-y-auto max-h-[600px]">
+                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex justify-between items-center">
+                  <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                    <History className="w-5 h-5" />
+                    Fee History
+                  </h2>
+                  {feeHistory.length > 0 && (
+                    <button
+                      onClick={() => printFeeHistory()}
+                      className="bg-white text-indigo-600 hover:bg-gray-100 font-semibold py-2 px-4 rounded-lg flex items-center gap-2"
+                    >
+                      <Printer className="w-5 h-5" />
+                      Print All
+                    </button>
+                  )}
+                </div>
+                <div className="p-6">
+                  {feeHistory.length > 0 ? (
+                    <div className="space-y-4">
+                      {feeHistory.map((record) => {
+                        const totalAmount = typeof record.total_amount === 'number' ? record.total_amount : parseFloat(record.total_amount) || 0;
+                        const amountPaid = typeof record.amount_paid === 'number' ? record.amount_paid : parseFloat(record.amount_paid) || 0;
+                        const discount = typeof record.discount === 'number' ? record.discount : parseFloat(record.discount) || 0;
+                        const fine = typeof record.fine === 'number' ? record.fine : parseFloat(record.fine) || 0;
+                        const balance = record.balance !== undefined && typeof record.balance === 'number'
+                          ? record.balance
+                          : (totalAmount - amountPaid);
 
-            {/* Fee History */}
-            <div className="bg-white rounded-xl shadow-lg overflow-y-auto max-h-[600px]">
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                  <History className="w-5 h-5" />
-                  Fee History
-                </h2>
-                {feeHistory.length > 0 && (
-                  <button
-                    onClick={() => printFeeHistory()}
-                    className="bg-white text-indigo-600 hover:bg-gray-100 font-semibold py-2 px-4 rounded-lg flex items-center gap-2"
-                  >
-                    <Printer className="w-5 h-5" />
-                    Print All
-                  </button>
-                )}
-              </div>
-              
-              <div className="p-6">
-                {feeHistory.length > 0 ? (
-                  <div className="space-y-4">
-                    {feeHistory.map((record) => {
-                      // Validate numeric fields
-                      console.log('Fee record:', record);
-                      const totalAmount = typeof record.total_amount === 'number' ? record.total_amount : parseFloat(record.total_amount) || 0;
-                      const amountPaid = typeof record.amount_paid === 'number' ? record.amount_paid : parseFloat(record.amount_paid) || 0;
-                      const discount = typeof record.discount === 'number' ? record.discount : parseFloat(record.discount) || 0;
-                      const fine = typeof record.fine === 'number' ? record.fine : parseFloat(record.fine) || 0;
-                      const balance = record.balance !== undefined && typeof record.balance === 'number'
-                        ? record.balance
-                        : (totalAmount - amountPaid);
+                        if (isNaN(totalAmount) || isNaN(amountPaid) || isNaN(balance)) {
+                          console.error('Invalid fee record:', record);
+                          return (
+                            <div key={record.id} className="border border-red-200 rounded-lg p-4">
+                              <p className="text-red-600">Error: Invalid fee data for {record.month_for || 'Unknown Month'}</p>
+                            </div>
+                          );
+                        }
 
-                      // Check for invalid data
-                      if (isNaN(totalAmount) || isNaN(amountPaid) || isNaN(balance)) {
-                        console.error('Invalid fee record:', record);
                         return (
-                          <div key={record.id} className="border border-red-200 rounded-lg p-4">
-                            <p className="text-red-600">Error: Invalid fee data for {record.month_for || 'Unknown Month'}</p>
+                          <div key={record.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h4 className="font-semibold text-gray-900 text-lg">{record.month_for}</h4>
+                                <p className="text-sm text-gray-600 flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  {new Date(record.payment_date).toLocaleDateString('en-IN')}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(totalAmount, amountPaid)}`}>
+                                  {getStatusText(totalAmount, amountPaid)}
+                                </span>
+                                <button
+                                  onClick={() => printFeeHistory(record)}
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="Print Fee Record"
+                                >
+                                  <Printer className="w-5 h-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(record.id)}
+                                  className="text-red-600 hover:text-red-800"
+                                  title="Delete Fee Record"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-gray-600">Fee Type:</span>
+                                <p className="font-semibold text-gray-900">{record.fee_type}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Payment Mode:</span>
+                                <p className="font-semibold text-gray-900">{record.payment_mode}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Total Amount:</span>
+                                <p className="font-semibold text-gray-900">₹{totalAmount.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Paid Amount:</span>
+                                <p className="font-semibold text-gray-900">₹{amountPaid.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Balance:</span>
+                                <p className={`font-semibold ${balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                  ₹{balance.toLocaleString()}
+                                </p>
+                              </div>
+                              {discount > 0 && (
+                                <div>
+                                  <span className="text-gray-600">Discount:</span>
+                                  <p className="font-semibold text-gray-900">₹{discount.toLocaleString()}</p>
+                                </div>
+                              )}
+                              {fine > 0 && (
+                                <div>
+                                  <span className="text-gray-600">Fine:</span>
+                                  <p className="font-semibold text-gray-900">₹{fine.toLocaleString()}</p>
+                                </div>
+                              )}
+                              {record.receipt_no && (
+                                <div>
+                                  <span className="text-gray-600">Receipt No:</span>
+                                  <p className="font-semibold text-gray-900">{record.receipt_no}</p>
+                                </div>
+                              )}
+                              {record.remarks && (
+                                <div className="col-span-2">
+                                  <span className="text-gray-600">Remarks:</span>
+                                  <p className="font-semibold text-gray-900">{record.remarks}</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         );
-                      }
-
-                      return (
-                        <div key={record.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <h4 className="font-semibold text-gray-900 text-lg">{record.month_for}</h4>
-                              <p className="text-sm text-gray-600 flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                {new Date(record.payment_date).toLocaleDateString('en-IN')}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(totalAmount, amountPaid)}`}>
-                                {getStatusText(totalAmount, amountPaid)}
-                              </span>
-                              <button
-                                onClick={() => printFeeHistory(record)}
-                                className="text-blue-600 hover:text-blue-800"
-                                title="Print Fee Record"
-                              >
-                                <Printer className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(record.id)}
-                                className="text-red-600 hover:text-red-800"
-                                title="Delete Fee Record"
-                              >
-                                <Trash2 className="w-5 h-5" />
-                              </button>
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-600">Fee Type:</span>
-                              <p className="font-semibold text-gray-900">{record.fee_type}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Payment Mode:</span>
-                              <p className="font-semibold text-gray-900">{record.payment_mode}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Total Amount:</span>
-                              <p className="font-semibold text-gray-900">₹{totalAmount.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Paid Amount:</span>
-                              <p className="font-semibold text-gray-900">₹{amountPaid.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <span className="text-gray-600">Balance:</span>
-                              <p className={`font-semibold ${balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                ₹{balance.toLocaleString()}
-                              </p>
-                            </div>
-                            {discount > 0 && (
-                              <div>
-                                <span className="text-gray-600">Discount:</span>
-                                <p className="font-semibold text-gray-900">₹{discount.toLocaleString()}</p>
-                              </div>
-                            )}
-                            {fine > 0 && (
-                              <div>
-                                <span className="text-gray-600">Fine:</span>
-                                <p className="font-semibold text-gray-900">₹{fine.toLocaleString()}</p>
-                              </div>
-                            )}
-                            {record.receipt_no && (
-                              <div>
-                                <span className="text-gray-600">Receipt No:</span>
-                                <p className="font-semibold text-gray-900">{record.receipt_no}</p>
-                              </div>
-                            )}
-                            {record.remarks && (
-                              <div className="col-span-2">
-                                <span className="text-gray-600">Remarks:</span>
-                                <p className="font-semibold text-gray-900">{record.remarks}</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <History className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-600 mb-2">No Fee History</h3>
-                    <p className="text-gray-500">No fee records found for this student</p>
-                  </div>
-                )}
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <History className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-600 mb-2">No Fee History</h3>
+                      <p className="text-gray-500">No fee records found for this student</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!selectedStudent && (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <CreditCard className="w-20 h-20 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">Select Student</h3>
-            <p className="text-gray-500">Choose a class and student to manage fee records</p>
-          </div>
-        )}
+          )}
+          {!selectedStudent && (
+            <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+              <CreditCard className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">Select Student</h3>
+              <p className="text-gray-500">Choose a class and student to manage fee records</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </AuthWrapper>
   );
 };
 

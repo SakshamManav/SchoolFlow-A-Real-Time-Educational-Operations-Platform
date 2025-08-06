@@ -14,6 +14,7 @@ import {
   MapPin,
   CreditCard,
 } from "lucide-react";
+import AuthWrapper from "../components/AuthWrapper";
 
 const API_BASE = "http://localhost:5001/student";
 
@@ -43,24 +44,19 @@ const StudentPage = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [allStudents, setAllStudents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [addForm, setAddForm] = useState(initialStudent);
   const [updateForm, setUpdateForm] = useState(initialStudent);
 
   const router = useRouter();
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      router.push("/login");
-      return;
-    }else{
-      console.log(localStorage.getItem("token"))
-      console.log(localStorage.getItem("user"))
-    }
     fetchStudents();
   }, []);
 
   const fetchStudents = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`${API_BASE}/getallstudents`, {
         headers: {
@@ -68,9 +64,19 @@ const StudentPage = () => {
         },
       });
       const data = await res.json();
-      setAllStudents(data || []);
+      if (!data.success) {
+        if (data.message === "Invalid or expired token") {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          router.replace("/login");
+          return;
+        }
+        throw new Error(data.message || "Failed to fetch students");
+      }
+      setAllStudents(data.data || []);
     } catch (err) {
-      alert("Failed to fetch students");
+      setError(err.message);
+      setAllStudents([]);
     }
     setLoading(false);
   };
@@ -100,11 +106,11 @@ const StudentPage = () => {
       },
       body: JSON.stringify(studentData),
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || "Failed to add student");
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.message || "Failed to add student");
     }
-    return res.json();
+    return data;
   };
 
   const handleAddSubmit = async (e) => {
@@ -115,7 +121,7 @@ const StudentPage = () => {
       fetchStudents();
       closeAddForm();
     } catch (err) {
-      alert(err.message || "Failed to add student");
+      alert(err.message);
     }
   };
 
@@ -126,7 +132,11 @@ const StudentPage = () => {
   };
 
   const openUpdateForm = (student) => {
-    setUpdateForm(student);
+    setUpdateForm({
+      ...initialStudent,
+      ...student,
+      dob: student.dob ? new Date(student.dob).toISOString().slice(0, 10) : "",
+    });
     setShowUpdateForm(true);
     setShowPopup(false);
   };
@@ -145,31 +155,28 @@ const StudentPage = () => {
       },
       body: JSON.stringify(studentData),
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || "Failed to update student");
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.message || "Failed to update student");
     }
-    return res.json();
+    return data;
   };
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
-    console.log(updateForm);
     const updatedData = { ...updateForm };
-
-    if (updatedData.dob) {
-      updatedData.dob = new Date(updatedData.dob).toISOString().slice(0, 10);
-    }
     delete updatedData.created_at;
     delete updatedData.updated_at;
+    delete updatedData.id;
+    delete updatedData.school_id;
 
     try {
-      await updateStudent(updatedData.id, updatedData);
+      await updateStudent(updateForm.id, updatedData);
       alert("Student updated successfully!");
       fetchStudents();
       closeUpdateForm();
     } catch (err) {
-      alert(err.message || "Failed to update student");
+      alert(err.message);
     }
   };
 
@@ -183,15 +190,15 @@ const StudentPage = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.message || "Failed to delete student");
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.message || "Failed to delete student");
         }
         alert("Student deleted successfully!");
         fetchStudents();
         setShowPopup(false);
       } catch (err) {
-        alert(err.message || "Failed to delete student");
+        alert(err.message);
       }
     }
   };
@@ -214,57 +221,63 @@ const StudentPage = () => {
 
   const studentsToShow = selectedClass
     ? allStudents.filter((s) => s.class === selectedClass)
-    : [];
+    : allStudents;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-indigo-600" />
-              <h1 className="text-3xl font-bold text-gray-800">
-                Student Management
-              </h1>
+    <AuthWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Users className="w-8 h-8 text-indigo-600" />
+                <h1 className="text-3xl font-bold text-gray-800">
+                  Student Management
+                </h1>
+              </div>
+              <button
+                onClick={openAddForm}
+                className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-base transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <Plus className="w-5 h-5" />
+                Add Student
+              </button>
             </div>
-            <button
-              onClick={openAddForm}
-              className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-base transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              <Plus className="w-5 h-5" />
-              Add Student
-            </button>
+            <div className="max-w-md">
+              <label
+                htmlFor="class-select"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Select Class
+              </label>
+              <select
+                id="class-select"
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900"
+              >
+                <option value="">All Classes</option>
+                {classes.map((cls) => (
+                  <option key={cls} value={cls}>
+                    {cls}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {error && (
+              <div className="mt-4 text-red-600 text-sm">{error}</div>
+            )}
           </div>
-          <div className="max-w-md">
-            <label
-              htmlFor="class-select"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Select Class
-            </label>
-            <select
-              id="class-select"
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900"
-            >
-              <option value="">Choose a class...</option>
-              {classes.map((cls) => (
-                <option key={cls} value={cls}>
-                  {cls}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {/* Students Table */}
-        {selectedClass && (
+          {/* Students Table */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
               <h2 className="text-xl font-semibold text-white">
-                Students in {selectedClass} ({studentsToShow.length} students)
+                {selectedClass
+                  ? `Students in ${selectedClass}`
+                  : "All Students"}{" "}
+                ({studentsToShow.length} students)
               </h2>
             </div>
             {loading ? (
@@ -289,7 +302,7 @@ const StudentPage = () => {
                       <tr key={student.id}>
                         <td className="px-6 py-4 text-center">{student.id}</td>
                         <td className="px-6 py-4 text-center">
-                          {student.student_id}
+                          {student.student_id || "-"}
                         </td>
                         <td className="px-6 py-4 text-center">
                           {student.student_name}
@@ -326,397 +339,397 @@ const StudentPage = () => {
               <div className="px-6 py-12 text-center text-black">
                 <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 text-lg">
-                  No students found in {selectedClass}
+                  {selectedClass
+                    ? `No students found in ${selectedClass}`
+                    : "No students found"}
                 </p>
               </div>
             )}
           </div>
-        )}
 
-        {/* Add Student Modal */}
-        {showAddForm && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50 text-black">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-white">
-                  Add New Student
-                </h3>
-                <button
-                  onClick={closeAddForm}
-                  className="text-white hover:text-gray-200"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <form className="p-6" onSubmit={handleAddSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* All fields except id and school_id */}
-                  {Object.keys(initialStudent).map((field) => (
-                    <div key={field}>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {field
-                          .replace(/_/g, " ")
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </label>
-                      {field === "address" ? (
-                        <textarea
-                          name={field}
-                          value={addForm[field]}
-                          onChange={handleAddFormChange}
-                          rows={3}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                          required={[
-                            "student_name",
-                            "class",
-                            "father_name",
-                            "mother_name",
-                            "dob",
-                            "address",
-                            "national_id",
-                            "email",
-                          ].includes(field)}
-                        />
-                      ) : field === "gender" ? (
-                        <select
-                          name={field}
-                          value={addForm[field]}
-                          onChange={handleAddFormChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                        >
-                          <option value="">Select Gender</option>
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Others">Others</option>
-                        </select>
-                      ) : field === "dob" ? (
-                        <input
-                          type="date"
-                          name={field}
-                          value={addForm[field]}
-                          onChange={handleAddFormChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                          required
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          name={field}
-                          value={addForm[field]}
-                          onChange={handleAddFormChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                          required={[
-                            "student_name",
-                            "class",
-                            "father_name",
-                            "mother_name",
-                            "dob",
-                            "address",
-                            "national_id",
-                            "email",
-                          ].includes(field)}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-8 flex justify-end gap-4">
+          {/* Add Student Modal */}
+          {showAddForm && (
+            <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50 text-black">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-white">
+                    Add New Student
+                  </h3>
                   <button
-                    type="button"
                     onClick={closeAddForm}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    className="text-white hover:text-gray-200"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Student
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Update Student Modal */}
-        {showUpdateForm && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50 text-black">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-white">
-                  Update Student
-                </h3>
-                <button
-                  onClick={closeUpdateForm}
-                  className="text-white hover:text-gray-200"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+                <form className="p-6" onSubmit={handleAddSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {Object.keys(initialStudent).map((field) => (
+                      <div key={field}>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {field
+                            .replace(/_/g, " ")
+                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </label>
+                        {field === "address" ? (
+                          <textarea
+                            name={field}
+                            value={addForm[field]}
+                            onChange={handleAddFormChange}
+                            rows={3}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                            required={[
+                              "student_name",
+                              "class",
+                              "father_name",
+                              "mother_name",
+                              "dob",
+                              "address",
+                              "national_id",
+                              "email",
+                            ].includes(field)}
+                          />
+                        ) : field === "gender" ? (
+                          <select
+                            name={field}
+                            value={addForm[field]}
+                            onChange={handleAddFormChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Others">Others</option>
+                          </select>
+                        ) : field === "dob" ? (
+                          <input
+                            type="date"
+                            name={field}
+                            value={addForm[field]}
+                            onChange={handleAddFormChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                            required
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            name={field}
+                            value={addForm[field]}
+                            onChange={handleAddFormChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                            required={[
+                              "student_name",
+                              "class",
+                              "father_name",
+                              "mother_name",
+                              "dob",
+                              "address",
+                              "national_id",
+                              "email",
+                            ].includes(field)}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-8 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={closeAddForm}
+                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Student
+                    </button>
+                  </div>
+                </form>
               </div>
-              <form className="p-6" onSubmit={handleUpdateSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* All fields except id and school_id */}
-                  {Object.keys(initialStudent).map((field) => (
-                    <div key={field}>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {field
-                          .replace(/_/g, " ")
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </label>
-                      {field === "address" ? (
-                        <textarea
-                          name={field}
-                          value={updateForm[field]}
-                          onChange={handleUpdateFormChange}
-                          rows={3}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                          required={[
-                            "student_name",
-                            "class",
-                            "father_name",
-                            "mother_name",
-                            "dob",
-                            "address",
-                            "national_id",
-                            "email",
-                          ].includes(field)}
-                        />
-                      ) : field === "gender" ? (
-                        <select
-                          name={field}
-                          value={updateForm[field]}
-                          onChange={handleUpdateFormChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                        >
-                          <option value="">Select Gender</option>
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Others">Others</option>
-                        </select>
-                      ) : field === "dob" ? (
-                        <input
-                          type="date"
-                          name={field}
-                          value={
-                            updateForm[field]
-                              ? updateForm[field].slice(0, 10)
-                              : ""
-                          }
-                          onChange={handleUpdateFormChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                          required
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          name={field}
-                          value={updateForm[field]}
-                          onChange={handleUpdateFormChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                          required={[
-                            "student_name",
-                            "class",
-                            "father_name",
-                            "mother_name",
-                            "dob",
-                            "address",
-                            "national_id",
-                            "email",
-                          ].includes(field)}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-8 flex justify-end gap-4">
+            </div>
+          )}
+
+          {/* Update Student Modal */}
+          {showUpdateForm && (
+            <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50 text-black">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-white">
+                    Update Student
+                  </h3>
                   <button
-                    type="button"
                     onClick={closeUpdateForm}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    className="text-white hover:text-gray-200"
                   >
-                    Cancel
+                    <X className="w-6 h-6" />
                   </button>
+                </div>
+                <form className="p-6" onSubmit={handleUpdateSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {Object.keys(initialStudent).map((field) => (
+                      <div key={field}>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {field
+                            .replace(/_/g, " ")
+                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </label>
+                        {field === "address" ? (
+                          <textarea
+                            name={field}
+                            value={updateForm[field]}
+                            onChange={handleUpdateFormChange}
+                            rows={3}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                            required={[
+                              "student_name",
+                              "class",
+                              "father_name",
+                              "mother_name",
+                              "dob",
+                              "address",
+                              "national_id",
+                              "email",
+                            ].includes(field)}
+                          />
+                        ) : field === "gender" ? (
+                          <select
+                            name={field}
+                            value={updateForm[field] || ""}
+                            onChange={handleUpdateFormChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Others">Others</option>
+                          </select>
+                        ) : field === "dob" ? (
+                          <input
+                            type="date"
+                            name={field}
+                            value={
+                              updateForm[field]
+                                ? new Date(updateForm[field]).toISOString().slice(0, 10)
+                                : ""
+                            }
+                            onChange={handleUpdateFormChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                            required
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            name={field}
+                            value={updateForm[field] || ""}
+                            onChange={handleUpdateFormChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                            required={[
+                              "student_name",
+                              "class",
+                              "father_name",
+                              "mother_name",
+                              "dob",
+                              "address",
+                              "national_id",
+                              "email",
+                            ].includes(field)}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-8 flex justify-end gap-4">
+                    <button
+                      type="button"
+                      onClick={closeUpdateForm}
+                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Update Student
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* View Student Modal */}
+          {showPopup && selectedStudent && (
+            <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center p-4 z-50">
+              <div className="max-h-[80%] bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
+                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-white">
+                    Student Details
+                  </h3>
                   <button
-                    type="submit"
-                    className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg flex items-center gap-2"
+                    onClick={handleClosePopup}
+                    className="text-white hover:text-gray-200"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          ID
+                        </label>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {selectedStudent.id}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          School ID
+                        </label>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {selectedStudent.school_id}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Student ID
+                        </label>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {selectedStudent.student_id || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Name
+                        </label>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {selectedStudent.student_name}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Class
+                        </label>
+                        <p className="text-lg text-gray-900">
+                          {selectedStudent.class}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Father's Name
+                        </label>
+                        <p className="text-lg text-gray-900">
+                          {selectedStudent.father_name}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Mother's Name
+                        </label>
+                        <p className="text-lg text-gray-900">
+                          {selectedStudent.mother_name}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          DOB
+                        </label>
+                        <p className="text-lg text-gray-900">
+                          {selectedStudent.dob
+                            ? new Date(selectedStudent.dob).toLocaleDateString(
+                                "en-IN"
+                              )
+                            : "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Gender
+                        </label>
+                        <p className="text-lg text-gray-900">
+                          {selectedStudent.gender || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-6 grid grid-cols-1 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-gray-500" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Contact Number
+                        </label>
+                        <p className="text-lg text-gray-900">
+                          {selectedStudent.contact_no || "-"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-gray-500" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Email ID
+                        </label>
+                        <p className="text-lg text-gray-900">
+                          {selectedStudent.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-gray-500 mt-1" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Address
+                        </label>
+                        <p className="text-lg text-gray-900">
+                          {selectedStudent.address}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-gray-500" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Aadhar Number
+                        </label>
+                        <p className="text-lg text-gray-900">
+                          {selectedStudent.national_id}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                  <button
+                    onClick={() => openUpdateForm(selectedStudent)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
                   >
                     <Edit className="w-4 h-4" />
-                    Update Student
+                    Update
+                  </button>
+                  <button
+                    onClick={() => handleDelete(selectedStudent.id)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* View Student Modal */}
-        {showPopup && selectedStudent && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center p-4 z-50">
-            <div className="max-h-[80%] bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-white">
-                  Student Details
-                </h3>
-                <button
-                  onClick={handleClosePopup}
-                  className="text-white hover:text-gray-200"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        ID
-                      </label>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {selectedStudent.id}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        School ID
-                      </label>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {selectedStudent.school_id}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Student ID
-                      </label>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {selectedStudent.student_id}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Name
-                      </label>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {selectedStudent.student_name}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Class
-                      </label>
-                      <p className="text-lg text-gray-900">
-                        {selectedStudent.class}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Father's Name
-                      </label>
-                      <p className="text-lg text-gray-900">
-                        {selectedStudent.father_name}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Mother's Name
-                      </label>
-                      <p className="text-lg text-gray-900">
-                        {selectedStudent.mother_name}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        DOB
-                      </label>
-                      <p className="text-lg text-gray-900">
-                        {selectedStudent.dob
-                          ? new Date(selectedStudent.dob).toLocaleDateString(
-                              "en-IN"
-                            )
-                          : "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Gender
-                      </label>
-                      <p className="text-lg text-gray-900">
-                        {selectedStudent.gender}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-6 grid grid-cols-1 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Contact Number
-                      </label>
-                      <p className="text-lg text-gray-900">
-                        {selectedStudent.contact_no}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Email ID
-                      </label>
-                      <p className="text-lg text-gray-900">
-                        {selectedStudent.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-gray-500 mt-1" />
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Address
-                      </label>
-                      <p className="text-lg text-gray-900">
-                        {selectedStudent.address}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-gray-500" />
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Aadhar Number
-                      </label>
-                      <p className="text-lg text-gray-900">
-                        {selectedStudent.national_id}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
-                <button
-                  onClick={() => openUpdateForm(selectedStudent)}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                  Update
-                </button>
-                <button
-                  onClick={() => handleDelete(selectedStudent.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </AuthWrapper>
   );
 };
 

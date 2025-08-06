@@ -1,180 +1,250 @@
-"use client"
-import React, { useState } from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import { Eye, X, Edit, Trash2, Users, Mail, Phone, DollarSign, Calendar, MapPin, GraduationCap, Briefcase, Upload, User } from 'lucide-react';
 
 const TeachersPage = () => {
+  const [teachers, setTeachers] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [formData, setFormData] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [error, setError] = useState('');
 
-  // Dummy subjects
+  // Get token from localStorage (set by admin authentication)
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+  const user = typeof window !== 'undefined' ? localStorage.getItem('user') || '' : '';
   const subjects = [
-    'Mathematics', 'English', 'Science', 'History', 'Geography', 
+    'Mathematics', 'English', 'Science', 'History', 'Geography',
     'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Physical Education'
   ];
 
-  const allTeachers = [
-    {
-      id: 'TCH001',
-      name: 'Dr. Rajesh Kumar',
-      subject: 'Mathematics',
-      email: 'rajesh.kumar@school.com',
-      phone: '+91 9876543210',
-      salary: 45000,
-      address: '123 Teacher Colony, New Delhi',
-      qualification: 'Ph.D in Mathematics',
-      experience: '12 years',
-      gender: 'Male',
-      dateOfJoining: '2012-08-15'
-    },
-    {
-      id: 'TCH002',
-      name: 'Ms. Priya Sharma',
-      subject: 'English',
-      email: 'priya.sharma@school.com',
-      phone: '+91 9876543211',
-      salary: 38000,
-      address: '456 Green Park, Mumbai',
-      qualification: 'M.A in English Literature',
-      experience: '8 years',
-      gender: 'Female',
-      dateOfJoining: '2016-07-20'
-    },
-    {
-      id: 'TCH003',
-      name: 'Mr. Amit Patel',
-      subject: 'Science',
-      email: 'amit.patel@school.com',
-      phone: '+91 9876543212',
-      salary: 42000,
-      address: '789 Science City, Bangalore',
-      qualification: 'M.Sc in Physics',
-      experience: '10 years',
-      gender: 'Male',
-      dateOfJoining: '2014-06-10'
-    },
-    {
-      id: 'TCH004',
-      name: 'Dr. Sunita Gupta',
-      subject: 'History',
-      email: 'sunita.gupta@school.com',
-      phone: '+91 9876543213',
-      salary: 41000,
-      address: '321 Heritage Lane, Jaipur',
-      qualification: 'Ph.D in History',
-      experience: '15 years',
-      gender: 'Female',
-      dateOfJoining: '2009-04-25'
-    },
-    {
-      id: 'TCH005',
-      name: 'Mr. Vikram Singh',
-      subject: 'Physical Education',
-      email: 'vikram.singh@school.com',
-      phone: '+91 9876543214',
-      salary: 35000,
-      address: '654 Sports Complex, Pune',
-      qualification: 'B.P.Ed',
-      experience: '6 years',
-      gender: 'Male',
-      dateOfJoining: '2018-03-12'
-    },
-    {
-      id: 'TCH006',
-      name: 'Ms. Kavya Mehta',
-      subject: 'Computer Science',
-      email: 'kavya.mehta@school.com',
-      phone: '+91 9876543215',
-      salary: 48000,
-      address: '987 Tech Park, Hyderabad',
-      qualification: 'M.Tech in Computer Science',
-      experience: '7 years',
-      gender: 'Female',
-      dateOfJoining: '2017-01-08'
-    },
-    {
-      id: 'TCH007',
-      name: 'Mr. Ravi Agarwal',
-      subject: 'Mathematics',
-      email: 'ravi.agarwal@school.com',
-      phone: '+91 9876543216',
-      salary: 43000,
-      address: '147 Academic Street, Chennai',
-      qualification: 'M.Sc in Mathematics',
-      experience: '9 years',
-      gender: 'Male',
-      dateOfJoining: '2015-09-30'
-    },
-    {
-      id: 'TCH008',
-      name: 'Dr. Meera Joshi',
-      subject: 'Biology',
-      email: 'meera.joshi@school.com',
-      phone: '+91 9876543217',
-      salary: 46000,
-      address: '258 Bio Research Center, Kolkata',
-      qualification: 'Ph.D in Biology',
-      experience: '11 years',
-      gender: 'Female',
-      dateOfJoining: '2013-11-15'
-    }
-  ];
+  const roles = ['teacher', 'head_teacher', 'admin'];
 
+  // API base URL
+  const API_URL = 'http://localhost:5001/teacher';
+
+  // Fetch teachers
+  useEffect(() => {
+    if (token) {
+      fetchTeachers();
+      console.log(localStorage.getItem("user"))
+      console.log(user)
+    } else {
+      setError('No authentication token found. Please log in as admin.');
+    }
+  }, [token]);
+
+  const fetchTeachers = async () => {
+    try {
+      const response = await fetch(`${API_URL}/getALL`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch teachers');
+      }
+      const data = await response.json();
+      console.log(data)
+      setTeachers(data);
+    } catch (err) {
+      setError('Failed to fetch teachers: ' + err.message);
+    }
+  };
+
+  // Handle subject filter
   const handleSubjectChange = (e) => {
     setSelectedSubject(e.target.value);
   };
 
-  const handleViewTeacher = (teacher) => {
-    setSelectedTeacher(teacher);
-    setShowModal(true);
-    setUploadedFile(null);
+  // Handle view teacher
+  const handleViewTeacher = async (teacher) => {
+    try {
+      const response = await fetch(`${API_URL}/get/${teacher.id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch teacher details');
+      }
+      const data = await response.json();
+      setSelectedTeacher(data);
+      setFormData(null);
+      setIsEditMode(false);
+      setShowModal(true);
+      setUploadedFile(null);
+    } catch (err) {
+      setError('Failed to fetch teacher details: ' + err.message);
+    }
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
+  // Handle create/edit form
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append('profilePic', file);
+        const response = await fetch(`${API_URL}/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'File upload failed');
+        }
+        const data = await response.json();
+        setUploadedFile(file);
+        setFormData({ ...formData, profile_pic_url: data.profile_pic_url });
+      } catch (err) {
+        setError('File upload failed: ' + err.message);
+      }
+    }
+  };
+
+  // Handle create teacher
+  const handleCreate = () => {
+    setFormData({
+      name: '', email: '', password: '', phone: '', gender: '', dob: '', address: '',
+      qualification: '', experience_years: '', subject_specialty: '', class_assigned: '',
+      profile_pic_url: '', joining_date: '', salary: '', role: 'teacher'
+    });
+    setIsEditMode(false);
+    setShowModal(true);
     setSelectedTeacher(null);
     setUploadedFile(null);
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setUploadedFile(file);
-      alert(`Resume "${file.name}" uploaded successfully!`);
-    }
+  // Handle edit teacher
+  const handleEdit = (teacher) => {
+    setFormData({
+      name: teacher.name,
+      email: teacher.email,
+      phone: teacher.phone || '',
+      gender: teacher.gender || '',
+      dob: teacher.dob ? teacher.dob.split('T')[0] : '',
+      address: teacher.address || '',
+      qualification: teacher.qualification || '',
+      experience_years: teacher.experience_years || '',
+      subject_specialty: teacher.subject_specialty || '',
+      class_assigned: teacher.class_assigned || '',
+      profile_pic_url: teacher.profile_pic_url || '',
+      joining_date: teacher.joining_date ? teacher.joining_date.split('T')[0] : '',
+      salary: teacher.salary || '',
+      role: teacher.role || 'teacher'
+    });
+    setSelectedTeacher(teacher);
+    setIsEditMode(true);
+    setShowModal(true);
+    setUploadedFile(null);
   };
 
-  const handleDelete = (teacherId) => {
-    if (window.confirm('Are you sure you want to delete this teacher?')) {
-      alert(`Teacher ${teacherId} would be deleted`);
+  // Handle form submit (create or update)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(isEditMode ? `${API_URL}/update/${selectedTeacher.id}` : `${API_URL}/create`, {
+        method: isEditMode ? 'PUT' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Operation failed');
+      }
+      alert(isEditMode ? 'Teacher updated successfully' : 'Teacher created successfully');
+      fetchTeachers();
       handleCloseModal();
+    } catch (err) {
+      setError('Operation failed: ' + err.message);
     }
   };
 
-  const handleUpdate = (teacherId) => {
-    alert(`Update form for teacher ${teacherId} would open`);
+  // Handle delete
+  const handleDelete = async (teacherId) => {
+    if (window.confirm('Are you sure you want to delete this teacher?')) {
+      try {
+        const response = await fetch(`${API_URL}/delete/${teacherId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const result = await response.json()
+        console.log(result)
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Delete failed');
+        }
+        alert('Teacher deleted successfully');
+        fetchTeachers();
+        handleCloseModal();
+      } catch (err) {
+        setError('Delete failed: ' + err.message);
+      }
+    }
   };
 
-  // Filter teachers based on selected subject
-  const filteredTeachers = selectedSubject 
-    ? allTeachers.filter(teacher => teacher.subject === selectedSubject)
-    : allTeachers;
+  // Handle modal close
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedTeacher(null);
+    setFormData(null);
+    setUploadedFile(null);
+    setIsEditMode(false);
+    setError('');
+  };
+
+  // Filter teachers
+  const filteredTeachers = selectedSubject
+    ? teachers.filter(teacher => teacher.subject_specialty === selectedSubject)
+    : teachers;
 
   const getGenderIcon = (gender) => {
-    return gender === 'Male' ? '👨‍🏫' : '👩‍🏫';
+    return gender === 'male' ? '👨‍🏫' : gender === 'female' ? '👩‍🏫' : '🧑‍🏫';
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
       <div className="max-w-7xl mx-auto">
+        {error && <p className="text-red-500 mb-4">{error}</p>}
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Users className="w-8 h-8 text-purple-600" />
-            <h1 className="text-3xl font-bold text-gray-800">Teachers Management</h1>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Users className="w-8 h-8 text-purple-600" />
+              <h1 className="text-3xl font-bold text-gray-800">Teachers Management</h1>
+            </div>
+            <button
+              onClick={handleCreate}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+            >
+              Add Teacher
+            </button>
           </div>
-          
+
           {/* Subject Filter Dropdown */}
           <div className="max-w-md">
             <label htmlFor="subject-filter" className="block text-sm font-medium text-gray-700 mb-2">
@@ -184,13 +254,11 @@ const TeachersPage = () => {
               id="subject-filter"
               value={selectedSubject}
               onChange={handleSubjectChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-gray-900"
+              className="w-full px-4 py-3 text-black border rounded-lg focus:ring-2 focus:ring-purple-500"
             >
               <option value="">All Subjects</option>
               {subjects.map((subject) => (
-                <option key={subject} value={subject}>
-                  {subject}
-                </option>
+                <option key={subject} value={subject}>{subject}</option>
               ))}
             </select>
           </div>
@@ -203,65 +271,45 @@ const TeachersPage = () => {
               Teachers List ({filteredTeachers.length} {selectedSubject ? `in ${selectedSubject}` : 'total'})
             </h2>
           </div>
-          
+
           {filteredTeachers.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Teacher ID
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Subject
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Phone
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Salary
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Salary</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredTeachers.map((teacher) => (
                     <tr key={teacher.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {teacher.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.id}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{getGenderIcon(teacher.gender)}</span>
                           {teacher.name}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900">
                         <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
-                          {teacher.subject}
+                          {teacher.subject_specialty}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {teacher.email}
+                      <td className="px-6 py-4 text-sm text-gray-900">{teacher.email}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{teacher.phone || '-'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <span className="font-semibold text-green-600">₹{teacher.salary?.toLocaleString() || '-'}</span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {teacher.phone}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span className="font-semibold text-green-600">₹{teacher.salary.toLocaleString()}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-900">
                         <button
                           onClick={() => handleViewTeacher(teacher)}
-                          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                         >
                           <Eye className="w-4 h-4" />
                           View
@@ -281,197 +329,404 @@ const TeachersPage = () => {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Modal Popup */}
-      {showModal && selectedTeacher && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center p-4 z-50">
-
-  <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto ">
-    {/* Modal Header */}
-    <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4 rounded-t-2xl sticky top-0 z-10">
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-          <span className="text-2xl">{getGenderIcon(selectedTeacher.gender)}</span>
-          Teacher Details
-        </h3>
-        <button
-          onClick={handleCloseModal}
-          className="text-white hover:text-gray-200 transition-colors"
-        >
-          <X className="w-6 h-6" />
-        </button>
-      </div>
-    </div>
-
-            {/* Modal Body */}
-            <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Basic Information */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
-                    Basic Information
-                  </h4>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Teacher ID</label>
-                      <p className="text-lg font-semibold text-gray-900">{selectedTeacher.id}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Name</label>
-                      <p className="text-lg font-semibold text-gray-900">{selectedTeacher.name}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Subject</label>
-                      <p className="text-lg text-purple-600 font-medium">{selectedTeacher.subject}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Gender</label>
-                      <p className="text-lg text-gray-900">{selectedTeacher.gender}</p>
-                    </div>
-                  </div>
+        {/* Modal for View/Edit/Create */}
+        {showModal && (
+          <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-screen overflow-y-auto">
+              <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4 rounded-t-2xl sticky top-0 z-10">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+                    <User className="w-6 h-6" />
+                    {isEditMode ? 'Edit Teacher' : selectedTeacher ? 'Teacher Details' : 'Add Teacher'}
+                  </h3>
+                  <button
+                    onClick={handleCloseModal}
+                    className="text-white hover:text-gray-200"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
                 </div>
+              </div>
 
-                {/* Contact Information */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
-                    Contact Information
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Email</label>
-                        <p className="text-lg text-gray-900">{selectedTeacher.email}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Phone</label>
-                        <p className="text-lg text-gray-900">{selectedTeacher.phone}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-gray-500 mt-1" />
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Address</label>
-                        <p className="text-lg text-gray-900">{selectedTeacher.address}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Professional Information */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
-                    Professional Information
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Qualification</label>
-                        <p className="text-lg text-gray-900">{selectedTeacher.qualification}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Experience</label>
-                        <p className="text-lg text-gray-900">{selectedTeacher.experience}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Date of Joining</label>
-                        <p className="text-lg text-gray-900">
-                          {new Date(selectedTeacher.dateOfJoining).toLocaleDateString('en-IN')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Salary & Resume Upload */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
-                    Salary & Documents
-                  </h4>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">Monthly Salary</label>
-                        <p className="text-xl font-bold text-green-600">₹{selectedTeacher.salary.toLocaleString()}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Resume Upload */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Upload Resume
-                      </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-purple-400 transition-colors">
-                        <div className="text-center">
-                          <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <label htmlFor="resume-upload" className="cursor-pointer">
-                            <span className="text-purple-600 hover:text-purple-700 font-medium">
-                              Click to upload resume
-                            </span>
+              <div className="p-6">
+                {error && <p className="text-red-500 mb-4">{error}</p>}
+                {formData ? (
+                  /* Form for Create/Edit */
+                  <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Basic Information</h4>
+                      <div className="grid grid-cols-1 text-black sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Name</label>
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                            required
+                          />
+                        </div>
+                        <div >
+                          <label className="text-sm font-medium text-gray-700">Email</label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                            required
+                          />
+                        </div>
+                        {!isEditMode && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-700">Password</label>
                             <input
-                              id="resume-upload"
-                              type="file"
-                              accept=".pdf,.doc,.docx"
-                              onChange={handleFileUpload}
-                              className="hidden"
+                              type="password"
+                              name="password"
+                              value={formData.password}
+                              onChange={handleFormChange}
+                              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                              required
                             />
-                          </label>
-                          <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 10MB</p>
-                          {uploadedFile && (
-                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-                              <p className="text-sm text-green-700">
-                                ✓ {uploadedFile.name} uploaded successfully
-                              </p>
+                          </div>
+                        )}
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Gender</label>
+                          <select
+                            name="gender"
+                            value={formData.gender}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Date of Birth</label>
+                          <input
+                            type="date"
+                            name="dob"
+                            value={formData.dob}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Role</label>
+                          <select
+                            name="role"
+                            value={formData.role}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                            required
+                          >
+                            {roles.map((role) => (
+                              <option key={role} value={role}>{role}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Contact Information</h4>
+                      <div className="space-y-3 text-black">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Phone</label>
+                          <input
+                            type="text"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Address</label>
+                          <textarea
+                            name="address"
+                            value={formData.address}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Professional Information</h4>
+                      <div className="space-y-3 text-black">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Qualification</label>
+                          <input
+                            type="text"
+                            name="qualification"
+                            value={formData.qualification}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Experience (Years)</label>
+                          <input
+                            type="number"
+                            name="experience_years"
+                            value={formData.experience_years}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Subject Specialty</label>
+                          <select
+                            name="subject_specialty"
+                            value={formData.subject_specialty}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          >
+                            <option value="">Select Subject</option>
+                            {subjects.map((subject) => (
+                              <option key={subject} value={subject}>{subject}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Class Assigned</label>
+                          <input
+                            type="text"
+                            name="class_assigned"
+                            value={formData.class_assigned}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Joining Date</label>
+                          <input
+                            type="date"
+                            name="joining_date"
+                            value={formData.joining_date}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Salary & Documents</h4>
+                      <div className="space-y-3 text-black">
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Salary</label>
+                          <input
+                            type="number"
+                            name="salary"
+                            value={formData.salary}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Profile Picture</label>
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                            <div className="text-center">
+                              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                              <label htmlFor="profile-pic-upload" className="cursor-pointer">
+                                <span className="text-purple-600 hover:text-purple-700 font-medium">
+                                  Upload profile picture
+                                </span>
+                                <input
+                                  id="profile-pic-upload"
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleFileUpload}
+                                  className="hidden"
+                                />
+                              </label>
+                              <p className="text-xs text-gray-500 mt-1">JPEG, PNG up to 5MB</p>
+                              {uploadedFile && (
+                                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                                  <p className="text-sm text-green-700">✓ {uploadedFile.name} uploaded</p>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-span-2 flex justify-end gap-3 mt-4">
+                      <button
+                        type="submit"
+                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+                      >
+                        {isEditMode ? 'Update' : 'Create'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCloseModal}
+                        className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  /* View Teacher Details */
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Basic Information</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Teacher ID</label>
+                          <p className="text-lg font-semibold text-gray-900">{selectedTeacher.id}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Name</label>
+                          <p className="text-lg font-semibold text-gray-900">{selectedTeacher.name}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Subject</label>
+                          <p className="text-lg text-purple-600 font-medium">{selectedTeacher.subject_specialty}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Gender</label>
+                          <p className="text-lg text-gray-900">{selectedTeacher.gender || '-'}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Date of Birth</label>
+                          <p className="text-lg text-gray-900">
+                            {selectedTeacher.dob ? new Date(selectedTeacher.dob).toLocaleDateString('en-IN') : '-'}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Role</label>
+                          <p className="text-lg text-gray-900">{selectedTeacher.role}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Contact Information</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Email</label>
+                            <p className="text-lg text-gray-900">{selectedTeacher.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Phone</label>
+                            <p className="text-lg text-gray-900">{selectedTeacher.phone || '-'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-gray-500 mt-1" />
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Address</label>
+                            <p className="text-lg text-gray-900">{selectedTeacher.address || '-'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Professional Information</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <GraduationCap className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Qualification</label>
+                            <p className="text-lg text-gray-900">{selectedTeacher.qualification || '-'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Experience</label>
+                            <p className="text-lg text-gray-900">{selectedTeacher.experience_years || 0} years</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Class Assigned</label>
+                            <p className="text-lg text-gray-900">{selectedTeacher.class_assigned || '-'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Joining Date</label>
+                            <p className="text-lg text-gray-900">
+                              {selectedTeacher.joining_date ? new Date(selectedTeacher.joining_date).toLocaleDateString('en-IN') : '-'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Salary & Documents</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Monthly Salary</label>
+                            <p className="text-xl font-bold text-green-600">₹{selectedTeacher.salary?.toLocaleString() || '-'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Upload className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <label className="text-sm font-medium text-gray-500">Profile Picture</label>
+                            {selectedTeacher.profile_pic_url ? (
+                              <img
+                                src={selectedTeacher.profile_pic_url}
+                                alt="Profile"
+                                className="w-24 h-24 rounded-full object-cover mt-2"
+                              />
+                            ) : (
+                              <p className="text-lg text-gray-900">-</p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {!formData && (
+                  <div className="flex justify-end gap-3 mt-4">
+                    <button
+                      onClick={() => handleEdit(selectedTeacher)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(selectedTeacher.id)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Modal Footer */}
-            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0">
-              <button
-                onClick={() => handleUpdate(selectedTeacher.id)}
-                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                Update
-              </button>
-              <button
-                onClick={() => handleDelete(selectedTeacher.id)}
-                className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

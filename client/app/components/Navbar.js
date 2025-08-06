@@ -1,10 +1,9 @@
-"use client";
 
-import {  signIn, signOut } from "next-auth/react";
-import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
-import { Menu, X, User, GraduationCap, LogOut, ChevronDown, Phone, PlaneTakeoff } from "lucide-react";
-import  { useRouter } from "next/navigation";
+"use client";
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Menu, X, User, GraduationCap, LogOut, ChevronDown, Phone, PlaneTakeoff } from 'lucide-react';
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
@@ -12,17 +11,39 @@ export default function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const router = useRouter();
+
   const toggleMenu = () => setMenuOpen(!menuOpen);
-  
+
   const toggleProfile = (e) => {
     e.stopPropagation();
     setProfileOpen(!profileOpen);
   };
 
-  // Close profile dropdown when clicking outside
+  const handleSignOut = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    setProfileOpen(false);
+    setMenuOpen(false);
+    router.replace("/login"); // Use replace to avoid adding to history
+  };
+
+  // Initialize user and handle click outside for profile dropdown
   useEffect(() => {
-    setUser(localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null);
-    console.log(user)
+    if (typeof window === 'undefined') return; // Prevent SSR errors
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setUser(undefined); // Explicitly set to undefined to indicate no user
+      console.log('No token found, user set to undefined');
+      return;
+    }
+
+    const storedUser = localStorage.getItem("user");
+    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+    setUser(parsedUser);
+    console.log('User:', parsedUser);
+
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setProfileOpen(false);
@@ -30,17 +51,10 @@ export default function Navbar() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // // user information
-  // useEffect(() => {
-    
-  //  const response = await fetch(`http://localhost:5001/schooluser/getuserbyid/{id}`)
-  // }, []);
-
+  // Close mobile menu on resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
@@ -103,7 +117,7 @@ export default function Navbar() {
                     </span>
                   </div>
                   <span className="text-white font-medium max-w-32 truncate">
-                    {user?.email || 'User'}
+                    {user.email || 'User'}
                   </span>
                   <ChevronDown className={`w-4 h-4 text-white/80 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -124,15 +138,14 @@ export default function Navbar() {
                         )}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-800">{user?.name}</p>
+                        <p className="font-semibold text-gray-800">{user.name}</p>
                         <p className="text-sm text-gray-600 truncate">{user.email}</p>
-                  
                       </div>
                     </div>
                     <div className="px-4 py-2">
                       <div className="flex items-center gap-2 mb-1">
                         <Phone className="w-4 h-4 text-indigo-500" />
-                        <span className="text-gray-700 text-sm">{user.user?.phone || user.phone || "No phone"}</span>
+                        <span className="text-gray-700 text-sm">{user.phone || "No phone"}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <PlaneTakeoff className="w-4 h-4 text-indigo-500" />
@@ -142,13 +155,7 @@ export default function Navbar() {
                       </div>
                     </div>
                     <button
-                      onClick={() => {
-                        signOut();
-                        localStorage.removeItem("token");
-                        localStorage.removeItem("user");
-                        router.push("/login");
-                        setProfileOpen(false);
-                      }}
+                      onClick={handleSignOut}
                       className="w-full flex items-center space-x-2 px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-200 border-t border-gray-200/50"
                     >
                       <LogOut className="w-4 h-4" />
@@ -162,7 +169,7 @@ export default function Navbar() {
                 onClick={() => router.push("/login")}
                 className="px-6 py-2 bg-white text-indigo-600 hover:bg-white/90 font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                Sign In 
+                Sign In
               </button>
             )}
           </div>
@@ -216,18 +223,13 @@ export default function Navbar() {
                         </span>
                       </div>
                       <div>
-                        <p className="text-white font-semibold">{user.user.name}</p>
-                        <p className="text-white/70 text-sm truncate">{user.user.email}</p>
+                        <p className="text-white font-semibold">{user.name}</p>
+                        <p className="text-white/70 text-sm truncate">{user.email}</p>
                       </div>
                     </div>
                   </div>
                   <button
-                    onClick={() => {
-                      signOut();
-                      localStorage.removeItem("token");
-                      router.push("/login");
-                      setMenuOpen(false);
-                    }}
+                    onClick={handleSignOut}
                     className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-500/20 text-red-100 hover:bg-red-500/30 rounded-lg font-medium transition-all duration-200 border border-red-500/30"
                   >
                     <LogOut className="w-4 h-4" />
@@ -237,12 +239,12 @@ export default function Navbar() {
               ) : (
                 <button
                   onClick={() => {
-                    signIn("google");
+                    router.push("/login");
                     setMenuOpen(false);
                   }}
                   className="w-full px-4 py-3 bg-white text-indigo-600 hover:bg-white/90 font-semibold rounded-lg transition-all duration-300 shadow-lg"
                 >
-                  Sign In 
+                  Sign In
                 </button>
               )}
             </div>
