@@ -1,4 +1,4 @@
-const db = require("../database/db");
+const db = require("../../database/db");
 const { logFeeHistory } = require("./FeesHistory");
 
 async function createFee(data, school_id) {

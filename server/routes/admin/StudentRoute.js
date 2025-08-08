@@ -1,8 +1,7 @@
-
 const express = require("express");
 const router = express.Router();
-const studentModel = require("../models/Student");
-const authenticateToken = require("../middleware/authMiddleware");
+const studentModel = require("../../models/admin/Student");
+const authenticateToken = require("../../middleware/admin/authMiddleware");
 
 router.post("/create", authenticateToken, async (req, res) => {
   try {

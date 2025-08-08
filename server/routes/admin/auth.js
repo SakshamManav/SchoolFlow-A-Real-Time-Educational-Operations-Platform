@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-const db = require("../database/db");
+const db = require("../../database/db");
 const jwt = require("jsonwebtoken");
-const authToken = require("../middleware/authMiddleware")
+const authToken = require("../../middleware/admin/authMiddleware")
 const SECRET_KEY = "your_secret_key"; // In real apps, store in .env
 
 // Register

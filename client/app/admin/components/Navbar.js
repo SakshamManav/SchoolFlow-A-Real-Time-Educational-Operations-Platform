@@ -83,10 +83,10 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
             {[
-              { href: "/students", label: "Students" },
-              { href: "/fees", label: "Fees" },
-              { href: "/teachers", label: "Teachers" },
-              { href: "/reports", label: "Reports" },
+              { href: "/admin/students", label: "Students" },
+              { href: "/admin/fees", label: "Fees" },
+              { href: "/admin/teachers", label: "Teachers" },
+              { href: "/admin/reports", label: "Reports" },
             ].map((item) => (
               <Link
                 key={item.href}

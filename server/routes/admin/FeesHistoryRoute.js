@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const feeHistoryModel = require("../models/FeesHistory");
+const feeHistoryModel = require("../../models/admin/FeesHistory");
 
 // router.post("/", async (req, res) => {
 //   try {

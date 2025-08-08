@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const feesModel = require("../models/Fees");
-const authenticateToken = require("../middleware/authMiddleware");
+const feesModel = require("../../models/admin/Fees");
+const authenticateToken = require("../../middleware/admin/authMiddleware");
 
 // Create fee
 router.post("/createfees", authenticateToken, async (req, res) => {

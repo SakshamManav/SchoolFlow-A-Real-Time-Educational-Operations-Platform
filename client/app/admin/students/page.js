@@ -64,6 +64,7 @@ const StudentPage = () => {
         },
       });
       const data = await res.json();
+      console.log(data)
       if (!data.success) {
         if (data.message === "Invalid or expired token") {
           localStorage.removeItem("token");

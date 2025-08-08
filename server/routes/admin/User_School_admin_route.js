@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const schoolUserModel = require("../models/User_School_Admin");
-const authenticateToken = require("../middleware/authMiddleware");
+const schoolUserModel = require("../../models/admin/User_School_Admin");
+const authenticateToken = require("../../middleware/admin/authMiddleware");
 
 
 router.get("/getallusers", authenticateToken, async (req, res) => {

@@ -1,5 +1,4 @@
-
-const db = require("../database/db");
+const db = require("../../database/db");
 
 async function createStudent(data, school_id) {
   try {

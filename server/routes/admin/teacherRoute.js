@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const teacherQueries = require('../models/teacher');
-const authenticateToken = require('../middleware/authMiddleware');
-const db = require('../database/db');
+const teacherQueries = require('../../models/admin/teacher');
+const authenticateToken = require('../../middleware/admin/authMiddleware');
+const db = require('../../database/db');
 const jwt = require('jsonwebtoken');
 const SECRET_KEY = "your_secret_key"; // Ensure this matches your middleware
 

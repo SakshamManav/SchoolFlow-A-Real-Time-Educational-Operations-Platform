@@ -6,6 +6,7 @@ const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    console.log(localStorage.getItem("token"))
     const timer = setTimeout(() => setIsVisible(true), delay);
     return () => clearTimeout(timer);
   }, [delay]);
