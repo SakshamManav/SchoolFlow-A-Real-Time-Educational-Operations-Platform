@@ -3,37 +3,37 @@ import Head from 'next/head';
 import { useState, useEffect } from 'react';
 
 export default function Timetable() {
-  // Mock timetable data (replace with actual API data in a real app)
+  // Mock timetable data with room numbers (replace with actual API data in a real app)
   const [timetable, setTimetable] = useState({
     Monday: [
-      { time: '09:00 AM - 10:00 AM', subject: 'Mathematics', teacher: 'Mr. Johnson' },
-      { time: '10:15 AM - 11:15 AM', subject: 'Physics', teacher: 'Dr. Lee' },
-      { time: '11:30 AM - 12:30 PM', subject: 'English', teacher: 'Ms. Carter' },
-      { time: '01:30 PM - 02:30 PM', subject: 'Chemistry', teacher: 'Mrs. Patel' },
+      { time: '09:00 AM - 10:00 AM', subject: 'Mathematics', teacher: 'Mr. Johnson', room: 'Room 101' },
+      { time: '10:15 AM - 11:15 AM', subject: 'Physics', teacher: 'Dr. Lee', room: 'Lab B' },
+      { time: '11:30 AM - 12:30 PM', subject: 'English', teacher: 'Ms. Carter', room: 'Room 204' },
+      { time: '01:30 PM - 02:30 PM', subject: 'Chemistry', teacher: 'Mrs. Patel', room: 'Lab A' },
     ],
     Tuesday: [
-      { time: '09:00 AM - 10:00 AM', subject: 'English', teacher: 'Ms. Carter' },
-      { time: '10:15 AM - 11:15 AM', subject: 'Biology', teacher: 'Dr. Brown' },
-      { time: '11:30 AM - 12:30 PM', subject: 'Mathematics', teacher: 'Mr. Johnson' },
-      { time: '01:30 PM - 02:30 PM', subject: 'History', teacher: 'Mr. Singh' },
+      { time: '09:00 AM - 10:00 AM', subject: 'English', teacher: 'Ms. Carter', room: 'Room 204' },
+      { time: '10:15 AM - 11:15 AM', subject: 'Biology', teacher: 'Dr. Brown', room: 'Lab C' },
+      { time: '11:30 AM - 12:30 PM', subject: 'Mathematics', teacher: 'Mr. Johnson', room: 'Room 101' },
+      { time: '01:30 PM - 02:30 PM', subject: 'History', teacher: 'Mr. Singh', room: 'Room 305' },
     ],
     Wednesday: [
-      { time: '09:00 AM - 10:00 AM', subject: 'Physics', teacher: 'Dr. Lee' },
-      { time: '10:15 AM - 11:15 AM', subject: 'Chemistry', teacher: 'Mrs. Patel' },
-      { time: '11:30 AM - 12:30 PM', subject: 'English', teacher: 'Ms. Carter' },
-      { time: '01:30 PM - 02:30 PM', subject: 'Mathematics', teacher: 'Mr. Johnson' },
+      { time: '09:00 AM - 10:00 AM', subject: 'Physics', teacher: 'Dr. Lee', room: 'Lab B' },
+      { time: '10:15 AM - 11:15 AM', subject: 'Chemistry', teacher: 'Mrs. Patel', room: 'Lab A' },
+      { time: '11:30 AM - 12:30 PM', subject: 'English', teacher: 'Ms. Carter', room: 'Room 204' },
+      { time: '01:30 PM - 02:30 PM', subject: 'Mathematics', teacher: 'Mr. Johnson', room: 'Room 101' },
     ],
     Thursday: [
-      { time: '09:00 AM - 10:00 AM', subject: 'Biology', teacher: 'Dr. Brown' },
-      { time: '10:15 AM - 11:15 AM', subject: 'Mathematics', teacher: 'Mr. Johnson' },
-      { time: '11:30 AM - 12:30 PM', subject: 'History', teacher: 'Mr. Singh' },
-      { time: '01:30 PM - 02:30 PM', subject: 'Physics', teacher: 'Dr. Lee' },
+      { time: '09:00 AM - 10:00 AM', subject: 'Biology', teacher: 'Dr. Brown', room: 'Lab C' },
+      { time: '10:15 AM - 11:15 AM', subject: 'Mathematics', teacher: 'Mr. Johnson', room: 'Room 101' },
+      { time: '11:30 AM - 12:30 PM', subject: 'History', teacher: 'Mr. Singh', room: 'Room 305' },
+      { time: '01:30 PM - 02:30 PM', subject: 'Physics', teacher: 'Dr. Lee', room: 'Lab B' },
     ],
     Friday: [
-      { time: '09:00 AM - 10:00 AM', subject: 'Chemistry', teacher: 'Mrs. Patel' },
-      { time: '10:15 AM - 11:15 AM', subject: 'English', teacher: 'Ms. Carter' },
-      { time: '11:30 AM - 12:30 PM', subject: 'Biology', teacher: 'Dr. Brown' },
-      { time: '01:30 PM - 02:30 PM', subject: 'Mathematics', teacher: 'Mr. Johnson' },
+      { time: '09:00 AM - 10:00 AM', subject: 'Chemistry', teacher: 'Mrs. Patel', room: 'Lab A' },
+      { time: '10:15 AM - 11:15 AM', subject: 'English', teacher: 'Ms. Carter', room: 'Room 204' },
+      { time: '11:30 AM - 12:30 PM', subject: 'Biology', teacher: 'Dr. Brown', room: 'Lab C' },
+      { time: '01:30 PM - 02:30 PM', subject: 'Mathematics', teacher: 'Mr. Johnson', room: 'Room 101' },
     ],
   });
 
@@ -99,6 +99,9 @@ export default function Timetable() {
                           </p>
                           <p className="text-sm text-gray-500">
                             {timetable[day].find((slot) => slot.time === time).teacher}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {timetable[day].find((slot) => slot.time === time).room}
                           </p>
                         </div>
                       ) : (

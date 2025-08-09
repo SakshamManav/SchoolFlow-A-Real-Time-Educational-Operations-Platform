@@ -20,6 +20,7 @@ app.use("/student", require("./routes/admin/StudentRoute.js"));
 app.use("/fees", require("./routes/admin/FeesRoute.js"));
 app.use("/feeshistory", require("./routes/admin/FeesHistoryRoute.js"));
 app.use("/teacher", require("./routes/admin/teacherRoute.js"));
+app.use("/timetable", require("./routes/admin/timetableRoute.js"));
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

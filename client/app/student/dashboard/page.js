@@ -1,126 +1,231 @@
-"use client"
-import Head from 'next/head';
-import { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
+"use client";
 
-export default function Dashboard() {
-  // Mock student data (replace with actual API calls in a real app)
-  const [student, setStudent] = useState({
-    name: "Alex Smith",
-    attendance: 92,
-    feeDueDate: "2025-08-15",
-  });
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  CalendarDays,
+  Bell,
+  Clock,
+  BarChart2,
+  ClipboardList,
+  Calendar,
+} from "lucide-react";
 
-  // Mock timetable data
-  const timetable = [
-    { time: "09:00 AM - 10:30 AM", subject: "Mathematics", room: "Room 101" },
-    { time: "10:45 AM - 12:15 PM", subject: "Physics", room: "Lab B" },
-    { time: "01:00 PM - 02:30 PM", subject: "English Literature", room: "Room 204" },
-  ];
+// Student Dashboard - Single-file React component for Next.js (App Router friendly)
+// Usage: import and render <StudentDashboard {...props} /> inside your page.
+// Tailwind CSS required. Framer Motion & lucide-react are optional but recommended.
 
-  // Mock announcements
-  const announcements = [
-    { id: 1, title: "School Holiday", date: "2025-08-10", content: "School will be closed on August 10th for a public holiday." },
-    { id: 2, title: "Parent-Teacher Meeting", date: "2025-08-12", content: "Scheduled for next Tuesday at 3 PM." },
-    { id: 3, title: "Science Fair", date: "2025-08-20", content: "Submit your projects by August 18th!" },
-  ];
-
-  // Mock upcoming deadlines
-  const deadlines = [
-    { id: 1, assignment: "Math Homework", dueDate: "2025-08-09", course: "Mathematics" },
-    { id: 2, assignment: "Physics Lab Report", dueDate: "2025-08-11", course: "Physics" },
-  ];
-
-  // Get current date for display
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+export default function StudentDashboard({
+  studentName = "Aarav",
+  today = new Date(),
+  timetable = [
+    { time: "09:00 - 09:45", subject: "Mathematics", room: "A101" },
+    { time: "10:00 - 10:45", subject: "English", room: "B204" },
+    { time: "11:00 - 11:45", subject: "Physics", room: "C307" },
+  ],
+  announcements = [
+    { title: "Sports Day on Aug 25", excerpt: "All students must assemble at 7:30 AM." },
+    { title: "Library Timings", excerpt: "Library will remain open till 6 PM on weekdays." },
+  ],
+  stats = { attendance: 92, nextFeeDate: "2025-08-20", pendingFees: "₹0" },
+  deadlines = [
+    { title: "Math Assignment: Integrals", due: "2025-08-12" },
+    { title: "Physics Lab Report", due: "2025-08-15" },
+  ],
+}) {
+  const friendlyDate = (d) => new Date(d).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 
   return (
-    <>
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <Head>
-        <title>Student Dashboard</title>
-        <meta name="description" content="Student Dashboard with timetable, announcements, and more" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="max-w-7xl mx-auto">
-        {/* Welcome Message */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-indigo-800">
-            Welcome back, {student.name}!
-          </h1>
-          <p className="text-gray-600">{today}</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Today's Timetable */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-indigo-700 mb-4">Today's Timetable</h2>
-            {timetable.length > 0 ? (
-              <ul className="space-y-4">
-                {timetable.map((item, index) => (
-                  <li key={index} className="border-b pb-2">
-                    <p className="font-medium text-gray-800">{item.subject}</p>
-                    <p className="text-sm text-gray-500">{item.time}</p>
-                    <p className="text-sm text-gray-500">{item.room}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">No classes scheduled for today.</p>
-            )}
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold text-slate-800">Welcome back, <span className="text-indigo-600">{studentName}</span>!</h1>
+            <p className="text-sm text-slate-500 mt-1">{friendlyDate(today)} • Good to see you — here’s what’s happening today.</p>
           </div>
 
-          {/* Recent Announcements */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-indigo-700 mb-4">Recent Announcements</h2>
-            <ul className="space-y-4">
-              {announcements.slice(0, 3).map((announcement) => (
-                <li key={announcement.id} className="border-b pb-2">
-                  <p className="font-medium text-gray-800">{announcement.title}</p>
-                  <p className="text-sm text-gray-500">{announcement.date}</p>
-                  <p className="text-sm text-gray-600">{announcement.content}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-indigo-700 mb-4">Quick Stats</h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-gray-600">Overall Attendance</p>
-                <p className="text-2xl font-bold text-indigo-600">{student.attendance}%</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Upcoming Fee Due Date</p>
-                <p className="text-lg font-medium text-red-500">{student.feeDueDate}</p>
+          <div className="flex items-center gap-4">
+            <button className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm text-sm hover:shadow-md">
+              <Bell className="w-4 h-4" />
+              Notifications
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-semibold">{studentName.charAt(0)}</div>
+              <div className="text-sm text-slate-600">
+                <div className="font-medium">{studentName}</div>
+                <div className="text-xs">Class 10 - Section A</div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Upcoming Deadlines */}
-          <div className="bg-white rounded-xl shadow-lg p-6 md:col-span-2 lg:col-span-3">
-            <h2 className="text-xl font-semibold text-indigo-700 mb-4">Upcoming Deadlines</h2>
-            {deadlines.length > 0 ? (
-              <ul className="space-y-4">
-                {deadlines.map((deadline) => (
-                  <li key={deadline.id} className="flex justify-between items-center border-b pb-2">
+        {/* Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left column (Main widgets) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Today's Timetable */}
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-indigo-50 p-2 rounded-lg">
+                    <CalendarDays className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-slate-800">Today's Timetable</h3>
+                    <p className="text-sm text-slate-500">{friendlyDate(today)}</p>
+                  </div>
+                </div>
+                <div className="text-xs text-slate-500">{timetable.length} classes</div>
+              </div>
+
+              <div className="divide-y">
+                {timetable.map((item, idx) => (
+                  <div key={idx} className="py-3 flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-800">{deadline.assignment}</p>
-                      <p className="text-sm text-gray-500">{deadline.course}</p>
+                      <div className="text-sm font-medium text-slate-700">{item.subject}</div>
+                      <div className="text-xs text-slate-500">{item.room}</div>
                     </div>
-                    <p className="text-sm text-red-500 font-medium">{deadline.dueDate}</p>
+                    <div className="text-sm text-slate-600">{item.time}</div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Announcements */}
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-amber-50 p-2 rounded-lg">
+                    <Bell className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-slate-800">Recent Announcements</h3>
+                    <p className="text-sm text-slate-500">Latest notices from school</p>
+                  </div>
+                </div>
+                <button className="text-sm text-indigo-600">View All</button>
+              </div>
+
+              <ul className="space-y-3">
+                {announcements.slice(0, 3).map((ann, i) => (
+                  <li key={i} className="p-3 rounded-lg hover:bg-slate-50">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="text-sm font-medium text-slate-800">{ann.title}</div>
+                        <div className="text-xs text-slate-500 mt-1">{ann.excerpt}</div>
+                      </div>
+                      <div className="text-xs text-slate-400">{/* Optional: date */}</div>
+                    </div>
                   </li>
                 ))}
               </ul>
-            ) : (
-              <p className="text-gray-500">No upcoming deadlines.</p>
-            )}
+            </motion.div>
+
+            {/* Upcoming Deadlines */}
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-50 p-2 rounded-lg">
+                    <ClipboardList className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-slate-800">Upcoming Deadlines</h3>
+                    <p className="text-sm text-slate-500">Assignments and submissions due soon</p>
+                  </div>
+                </div>
+                <div className="text-xs text-slate-500">{deadlines.length} items</div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {deadlines.map((d, i) => (
+                  <div key={i} className="p-3 border rounded-lg bg-gradient-to-br from-white to-slate-50">
+                    <div className="text-sm font-medium text-slate-800">{d.title}</div>
+                    <div className="text-xs text-slate-500 mt-2 flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Due: <span className="ml-1 font-semibold">{new Date(d.due).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right column (Quick stats) */}
+          <div className="space-y-6">
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-indigo-50 p-2 rounded-lg">
+                    <BarChart2 className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-slate-800">Quick Stats</h3>
+                    <p className="text-sm text-slate-500">Snapshot of important info</p>
+                  </div>
+                </div>
+                <div className="text-xs text-slate-500">Summary</div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-500">Overall Attendance</div>
+                    <div className="text-xl font-semibold text-slate-800">{stats.attendance}%</div>
+                  </div>
+                  <div className="w-20 h-6 bg-slate-100 rounded-full flex items-center justify-center text-xs">{stats.attendance >= 75 ? "Good" : "Alert"}</div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-500">Next Fee Due</div>
+                    <div className="text-sm font-semibold text-slate-700">{new Date(stats.nextFeeDate).toLocaleDateString()}</div>
+                  </div>
+                  <div className="text-sm text-slate-600">{stats.pendingFees}</div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-500">Last Login</div>
+                    <div className="text-sm font-semibold text-slate-700">{new Date().toLocaleString()}</div>
+                  </div>
+                  <div className="text-sm text-slate-600">IP • masked</div>
+                </div>
+
+                <div className="mt-4">
+                  <button className="w-full py-2 rounded-lg bg-indigo-600 text-white font-medium hover:brightness-95">Pay Fees</button>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Small widget: Today timeline or quick links */}
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-sky-50 p-2 rounded-lg">
+                    <Clock className="w-5 h-5 text-sky-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-800">Today at a glance</h4>
+                    <div className="text-xs text-slate-500">{timetable[0]?.time || "No classes today"}</div>
+                  </div>
+                </div>
+                <div className="text-xs text-indigo-600">{timetable[0]?.subject}</div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button className="px-3 py-1 rounded-lg bg-slate-50 text-sm">My Profile</button>
+                <button className="px-3 py-1 rounded-lg bg-slate-50 text-sm">Assignments</button>
+                <button className="px-3 py-1 rounded-lg bg-slate-50 text-sm">Messages</button>
+                <button className="px-3 py-1 rounded-lg bg-slate-50 text-sm">Timetable</button>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </main>
-    </div></>
+
+        {/* Footer small */}
+        <div className="mt-6 text-xs text-slate-400 text-center">Need changes? Plug your real data from API or CMS — this component is built to accept props.</div>
+      </div>
+    </div>
   );
 }
