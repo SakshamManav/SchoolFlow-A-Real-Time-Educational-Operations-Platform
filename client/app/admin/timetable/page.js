@@ -1,9 +1,11 @@
 "use client";
 import Head from "next/head";
 import { useState, useEffect } from "react";
+import { FaEye, FaEdit, FaTrash, FaPlus, FaChalkboardTeacher, FaBook, FaDoorOpen } from "react-icons/fa";
 
 export default function AdminTimetable() {
   const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [viewClass, setViewClass] = useState(null);
   const [editingClass, setEditingClass] = useState(null);
   const [creatingClass, setCreatingClass] = useState(false);
@@ -33,8 +35,9 @@ export default function AdminTimetable() {
 
   // Fetch all classes on mount
   useEffect(() => {
-    const fetchClasses = async () => {
+  const fetchClasses = async () => {
       try {
+        setLoading(true);
         const response = await fetch(
           "http://localhost:5001/timetable/classes",
           {
@@ -58,6 +61,8 @@ export default function AdminTimetable() {
         }
       } catch (error) {
         console.error("Error fetching classes:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchClasses();
@@ -355,72 +360,91 @@ export default function AdminTimetable() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-indigo-800">
-            Admin Timetable Management
-          </h1>
+  <main className="max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-indigo-800 flex items-center gap-2">
+              <FaChalkboardTeacher className="inline-block text-indigo-600" />
+              Admin Timetable Management
+            </h1>
+            <p className="text-gray-500 mt-1">Easily manage, view, and edit class timetables for your school.</p>
+          </div>
           <button
             onClick={() => setCreatingClass(true)}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
+            title="Create New Class"
           >
-            Create New Class
+            <FaPlus /> Create New Class
           </button>
         </div>
-      <div> 
-      <h1 className="text-black text-3xl font-bold text-indigo-800 mb-6">
-        Manage Your School's Timetable
-      </h1>
-      </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {classes.map((cls) => (
-            <div
-              key={cls.classId}
-              className="bg-white rounded-xl shadow-lg p-6 relative"
-            >
-              <h2 className="text-xl font-semibold text-indigo-700 mb-4">
-                Class {cls.classId}
-              </h2>
-              <div className="flex justify-end space-x-2 absolute top-4 right-4">
-                <button
-                  onClick={() => handleViewClass(cls.classId)}
-                  className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-                >
-                  View
-                </button>
-                <button
-                  onClick={() =>
-                    handleEditClass(cls.classId, cls.timetable, cls.schoolDays)
-                  }
-                  className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteClass(cls.classId)}
-                  className="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
-                >
-                  Delete
-                </button>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <svg className="animate-spin h-10 w-10 text-indigo-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            <span className="text-gray-500">Loading classes...</span>
+          </div>
+        ) : classes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <FaBook className="text-5xl text-indigo-200 mb-4" />
+            <span className="text-gray-400 text-lg">No classes found. Click "Create New Class" to get started!</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {classes.map((cls) => (
+              <div
+                key={cls.classId}
+                className="bg-white rounded-xl shadow-lg p-6 relative transition hover:shadow-2xl hover:-translate-y-1 border border-gray-100"
+              >
+                <h2 className="text-xl font-semibold text-indigo-700 mb-1 flex items-center gap-2">
+                  <FaChalkboardTeacher className="text-indigo-400" />
+                  {cls.className ? `${cls.className}` : `Class ${cls.classId}`}
+                </h2>
+                <p className="text-gray-500 text-sm mb-2">ID: {cls.classId}</p>
+                <div className="flex justify-end space-x-2 absolute top-4 right-4">
+                  <button
+                    onClick={() => handleViewClass(cls.classId)}
+                    className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 text-sm shadow"
+                    title="View Timetable"
+                  >
+                    <FaEye />
+                  </button>
+                  <button
+                    onClick={() => handleEditClass(cls.classId, cls.timetable, cls.schoolDays)}
+                    className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 text-sm shadow"
+                    title="Edit Timetable"
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClass(cls.classId)}
+                    className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 text-sm shadow"
+                    title="Delete Class"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+                <p className="text-gray-600 mt-2">
+                  <FaBook className="inline-block mr-1 text-indigo-300" />
+                  Subjects: {[
+                    ...new Set(
+                      Object.values(cls.timetable)
+                        .flat()
+                        .map((slot) => slot.subject)
+                    ),
+                  ]
+                    .filter(Boolean)
+                    .join(", ") || <span className="text-gray-400">None</span>}
+                </p>
+                <p className="text-gray-600">
+                  <FaDoorOpen className="inline-block mr-1 text-indigo-300" />
+                  Total Slots: {Object.values(cls.timetable).flat().length}
+                </p>
               </div>
-              <p className="text-gray-600">
-                Total Slots: {Object.values(cls.timetable).flat().length}
-              </p>
-              <p className="text-gray-600">
-                Subjects:{" "}
-                {[
-                  ...new Set(
-                    Object.values(cls.timetable)
-                      .flat()
-                      .map((slot) => slot.subject)
-                  ),
-                ]
-                  .filter(Boolean)
-                  .join(", ")}
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* View Timetable Modal */}
         {viewClass && (
@@ -431,18 +455,14 @@ export default function AdminTimetable() {
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full table-auto border-collapse">
-                  <thead>
+                  <thead className="sticky top-0 z-10">
                     <tr className="bg-indigo-100">
-                      <th className="p-4 text-left text-indigo-700 font-semibold">
-                        Time
-                      </th>
+                      <th className="p-4 text-left text-indigo-700 font-semibold sticky left-0 bg-indigo-100">Time</th>
                       {viewClass.timetable &&
                         Object.keys(viewClass.timetable).map((day) => (
                           <th
                             key={day}
-                            className={`p-4 text-center text-indigo-700 font-semibold ${
-                              day === currentDay ? "bg-indigo-200" : ""
-                            }`}
+                            className={`p-4 text-center text-indigo-700 font-semibold ${day === currentDay ? "bg-indigo-200" : ""}`}
                           >
                             {day}
                           </th>
@@ -451,63 +471,36 @@ export default function AdminTimetable() {
                   </thead>
                   <tbody>
                     {timeSlots.map((time, index) => (
-                      <tr key={index} className="border-b border-gray-200">
-                        <td className="p-4 text-gray-700 font-medium">
+                      <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-indigo-50"}>
+                        <td className="p-4 text-gray-700 font-medium sticky left-0 bg-white">
                           {time}
                         </td>
                         {viewClass.timetable &&
-                          Object.keys(viewClass.timetable).map((day) => (
-                            <td
-                              key={`${day}-${time}`}
-                              className={`p-4 text-center ${
-                                day === currentDay ? "bg-indigo-50" : "bg-white"
-                              }`}
-                            >
-                              {viewClass.timetable[day].find(
-                                (slot) => slot.time === time
-                              ) ? (
-                                <div>
-                                  <p className="text-gray-800 font-medium">
-                                    {
-                                      viewClass.timetable[day].find(
-                                        (slot) => slot.time === time
-                                      ).subject
-                                    }
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    {
-                                      viewClass.timetable[day].find(
-                                        (slot) => slot.time === time
-                                      ).teacher
-                                    }
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    {
-                                      viewClass.timetable[day].find(
-                                        (slot) => slot.time === time
-                                      ).room
-                                    }
-                                  </p>
-                                  {/* <div className="mt-2 flex justify-center space-x-2">
-                                    <button
-                                      onClick={() =>
-                                        handleDeleteSlot(
-                                          viewClass.classId,
-                                          day,
-                                          time
-                                        )
-                                      }
-                                      className="text-red-600 hover:text-red-800 text-sm"
-                                    >
-                                      Delete
-                                    </button>
-                                  </div> */}
-                                </div>
-                              ) : (
-                                <p className="text-gray-400">Free</p>
-                              )}
-                            </td>
-                          ))}
+                          Object.keys(viewClass.timetable).map((day) => {
+                            const slot = viewClass.timetable[day].find((slot) => slot.time === time);
+                            return (
+                              <td
+                                key={`${day}-${time}`}
+                                className={`p-4 text-center align-top ${day === currentDay ? "bg-indigo-50" : "bg-white"}`}
+                              >
+                                {slot ? (
+                                  <div className="space-y-1">
+                                    <span className="flex items-center gap-1 text-gray-800 font-medium">
+                                      <FaBook className="text-indigo-400" /> {slot.subject}
+                                    </span>
+                                    <span className="flex items-center gap-1 text-sm text-gray-500">
+                                      <FaChalkboardTeacher className="text-indigo-300" /> {slot.teacher}
+                                    </span>
+                                    <span className="flex items-center gap-1 text-sm text-gray-500">
+                                      <FaDoorOpen className="text-indigo-300" /> {slot.room}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400">Free</span>
+                                )}
+                              </td>
+                            );
+                          })}
                       </tr>
                     ))}
                   </tbody>

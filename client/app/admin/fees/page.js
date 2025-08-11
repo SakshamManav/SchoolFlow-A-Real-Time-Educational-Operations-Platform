@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Calendar, DollarSign, History, User, Hash, FileText, Trash2, Search, Printer } from 'lucide-react';
-import AuthWrapper from '../components/AuthWrapper';
+
 
 const FeesPage = () => {
   const [selectedClass, setSelectedClass] = useState('');
@@ -20,7 +20,7 @@ const FeesPage = () => {
     due_date: '',
     discount: 0,
     fine: 0,
-    school_id: '',
+    // school_id: '',
   });
   const [classes] = useState([
     'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
@@ -123,7 +123,7 @@ const FeesPage = () => {
       due_date: '',
       discount: 0,
       fine: 0,
-      school_id: '',
+      // school_id: '',
     });
     setFeeHistory([]);
   };
@@ -145,7 +145,7 @@ const FeesPage = () => {
       due_date: '',
       discount: 0,
       fine: 0,
-      school_id: '',
+      // school_id: '',
     });
   };
 
@@ -166,7 +166,7 @@ const FeesPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.month_for || !formData.payment_date || !formData.total_amount || !formData.amount_paid || !formData.fee_type || !formData.payment_mode || !formData.school_id) {
+    if (!formData.month_for || !formData.payment_date || !formData.total_amount || !formData.amount_paid || !formData.fee_type || !formData.payment_mode ) {
       setError('Please fill all required fields');
       return;
     }
@@ -182,7 +182,7 @@ const FeesPage = () => {
         },
         body: JSON.stringify({
           student_id: selectedStudent,
-          school_id: formData.school_id,
+          // school_id: formData.school_id,
           fee_type: formData.fee_type,
           month_for: formData.month_for,
           academic_year: formData.academic_year,
@@ -505,7 +505,6 @@ const FeesPage = () => {
   const paymentModes = ['Cash', 'Card', 'Online', 'UPI', 'Bank Transfer'];
 
   return (
-    <AuthWrapper>
       <div
         className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4"
         suppressHydrationWarning={true}
@@ -526,8 +525,8 @@ const FeesPage = () => {
               <CreditCard className="w-8 h-8 text-emerald-600" />
               <h1 className="text-3xl font-bold text-gray-800">Fees Management</h1>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+            <div className="space-y-6">
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
                 <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-2">
                   Select Class
                 </label>
@@ -545,42 +544,52 @@ const FeesPage = () => {
                   ))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="student-select" className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Student
-                </label>
-                <div className="relative mb-3">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    placeholder="Search by Student ID..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 pl-10"
-                    disabled={!selectedClass}
-                  />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+
+              {selectedClass && (
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                  <label htmlFor="student-search" className="block text-sm font-medium text-gray-700 mb-2">
+                    Search Student
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="student-search"
+                      type="text"
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      placeholder="Search by Student ID..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 pl-10"
+                    />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  </div>
                 </div>
-                <select
-                  id="student-select"
-                  value={selectedStudent}
-                  onChange={handleStudentChange}
-                  disabled={!selectedClass}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Choose a student...</option>
-                  {filteredStudents.length > 0 ? (
-                    filteredStudents.map((student) => (
-                      <option key={student.id} value={student.id.toString()}>
-                        {student.student_name} (ID: {student.student_id})
+              )}
+
+              {selectedClass && (
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                  <label htmlFor="student-select" className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Student from List
+                  </label>
+                  <select
+                    id="student-select"
+                    value={selectedStudent}
+                    onChange={handleStudentChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900"
+                  >
+                    <option value="">Choose a student...</option>
+                    {filteredStudents.length > 0 ? (
+                      filteredStudents.map((student) => (
+                        <option key={student.id} value={student.id.toString()}>
+                          {student.student_name} (ID: {student.student_id})
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        No students found
                       </option>
-                    ))
-                  ) : (
-                    <option value="" disabled>
-                      No students found
-                    </option>
-                  )}
-                </select>
-              </div>
+                    )}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
           {selectedStudent && currentStudent && (
@@ -679,7 +688,7 @@ const FeesPage = () => {
                         ))}
                       </select>
                     </div>
-                    <div>
+                    {/* <div>
                       <label htmlFor="school_id" className="block text-sm font-medium text-gray-700 mb-2">
                         School ID *
                       </label>
@@ -693,7 +702,7 @@ const FeesPage = () => {
                         className="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                         placeholder="Enter school ID"
                       />
-                    </div>
+                    </div> */}
                     <div>
                       <label htmlFor="payment_date" className="block text-sm font-medium text-gray-700 mb-2">
                         Submission Date *
@@ -969,7 +978,6 @@ const FeesPage = () => {
           )}
         </div>
       </div>
-    </AuthWrapper>
   );
 };
 

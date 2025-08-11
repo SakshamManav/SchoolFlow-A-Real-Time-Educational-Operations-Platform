@@ -14,33 +14,42 @@ router.post("/create", authenticateToken, async (req, res) => {
     });
   } catch (err) {
     console.error("Error creating student:", err);
-    if (err.message.includes("Duplicate student_id")) {
-      return res.status(409).json({ 
-        success: false, 
-        message: "Student ID already in use",
-        error: err.message 
-      });
-    }
-    if (err.message.includes("Missing required fields")) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Missing required fields",
-        error: err.message 
-      });
-    }
-    if (err.message.includes("Invalid email format")) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid email format",
-        error: err.message 
-      });
-    }
-    if (err.message.includes("Invalid date format")) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid date format for DOB",
-        error: err.message 
-      });
+    // Handle specific error cases
+    switch(err.message) {
+      case "DUPLICATE_STUDENT_ID":
+        return res.status(409).json({ 
+          success: false, 
+          message: "This Student ID is already in use. Please use a different Student ID.",
+          error: "DUPLICATE_STUDENT_ID"
+        });
+      case "DUPLICATE_EMAIL":
+        return res.status(409).json({ 
+          success: false, 
+          message: "This email address is already registered with another student. Please use a different email.",
+          error: "DUPLICATE_EMAIL"
+        });
+      default:
+        if (err.message.includes("Missing required fields")) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Please fill in all required fields: " + err.message.split(": ")[1],
+            error: "MISSING_FIELDS"
+          });
+        }
+        if (err.message.includes("Invalid email format")) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Please enter a valid email address",
+            error: "INVALID_EMAIL"
+          });
+        }
+        if (err.message.includes("Invalid date format")) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Please enter a valid date of birth (YYYY-MM-DD)",
+            error: "INVALID_DATE"
+          });
+        }
     }
     res.status(500).json({ 
       success: false, 

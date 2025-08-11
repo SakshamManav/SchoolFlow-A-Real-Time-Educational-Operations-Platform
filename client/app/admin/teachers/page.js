@@ -4,6 +4,7 @@ import { Eye, X, Edit, Trash2, Users, Mail, Phone, DollarSign, Calendar, MapPin,
 
 const TeachersPage = () => {
   const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
@@ -28,11 +29,13 @@ const TeachersPage = () => {
   // Fetch teachers
   useEffect(() => {
     if (token) {
+      setLoading(true);
       fetchTeachers();
       console.log(localStorage.getItem("user"))
       console.log(user)
     } else {
       setError('No authentication token found. Please log in as admin.');
+      setLoading(false);
     }
   }, [token]);
 
@@ -50,10 +53,11 @@ const TeachersPage = () => {
         throw new Error(errorData.error || 'Failed to fetch teachers');
       }
       const data = await response.json();
-      console.log(data)
       setTeachers(data);
     } catch (err) {
       setError('Failed to fetch teachers: ' + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -271,11 +275,18 @@ const TeachersPage = () => {
               Teachers List ({filteredTeachers.length} {selectedSubject ? `in ${selectedSubject}` : 'total'})
             </h2>
           </div>
-
-          {filteredTeachers.length > 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <svg className="animate-spin h-10 w-10 text-purple-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+              <span className="text-gray-500">Loading teachers...</span>
+            </div>
+          ) : filteredTeachers.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
@@ -287,8 +298,8 @@ const TeachersPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredTeachers.map((teacher) => (
-                    <tr key={teacher.id} className="hover:bg-gray-50 transition-colors">
+                  {filteredTeachers.map((teacher, idx) => (
+                    <tr key={teacher.id} className={idx % 2 === 0 ? "bg-white hover:bg-purple-50 transition-colors" : "bg-purple-50 hover:bg-purple-100 transition-colors"}>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div className="flex items-center gap-2">
@@ -309,7 +320,8 @@ const TeachersPage = () => {
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <button
                           onClick={() => handleViewTeacher(teacher)}
-                          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow"
+                          title="View Teacher"
                         >
                           <Eye className="w-4 h-4" />
                           View

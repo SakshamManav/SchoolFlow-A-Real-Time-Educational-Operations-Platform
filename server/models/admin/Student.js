@@ -25,14 +25,20 @@ async function createStudent(data, school_id) {
       throw new Error("Invalid date format for DOB, use YYYY-MM-DD");
     }
 
-    // Check for duplicate student_id
-    if (student_id) {
+    // Check for duplicate student_id and email
+    if (student_id || email) {
       const [existing] = await db.execute(
-        "SELECT 1 FROM student WHERE student_id = ? AND school_id = ?",
-        [student_id, school_id]
+        "SELECT student_id, email FROM student WHERE (student_id = ? OR email = ?) AND school_id = ?",
+        [student_id, email, school_id]
       );
+      
       if (existing.length > 0) {
-        throw new Error(`Duplicate student_id: ${student_id} is already in use`);
+        if (existing[0].student_id === student_id) {
+          throw new Error("DUPLICATE_STUDENT_ID");
+        }
+        if (existing[0].email === email) {
+          throw new Error("DUPLICATE_EMAIL");
+        }
       }
     }
 

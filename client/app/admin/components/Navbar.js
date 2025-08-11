@@ -86,7 +86,7 @@ export default function Navbar() {
               { href: "/admin/students", label: "Students" },
               { href: "/admin/fees", label: "Fees" },
               { href: "/admin/teachers", label: "Teachers" },
-              {href:"admin/timetable", label: "Timetable" }
+              {href:"/admin/timetable", label: "Timetable" }
             ].map((item) => (
               <Link
                 key={item.href}
@@ -193,7 +193,7 @@ export default function Navbar() {
                 { href: "/students", label: "Students" },
                 { href: "/fees", label: "Fees" },
                 { href: "/teachers", label: "Teachers" },
-                {href:"/admin/timetable", label: "Timetable" }
+                {href:"/timetable", label: "Timetable" }
               ].map((item) => (
                 <Link
                   key={item.href}

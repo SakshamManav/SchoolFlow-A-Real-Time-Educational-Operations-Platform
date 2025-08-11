@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react';
 import { DollarSign, Shield, Download, Star, Users, TrendingUp, CheckCircle, ArrowRight, Sparkles, Globe, Award } from 'lucide-react';
+import Navbar from './admin/components/Navbar';
 
 const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -12,6 +13,8 @@ const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => {
   }, [delay]);
 
   return (
+    <>
+    
     <div className={`group relative bg-gray-800/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl hover:shadow-cyan-500/20 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-700/50 overflow-hidden ${
       isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
     }`}>
@@ -35,6 +38,7 @@ const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
@@ -93,6 +97,7 @@ const TestimonialCard = ({ name, role, content, rating = 5 }) => {
         <div className="text-cyan-400 text-sm">{role}</div>
       </div>
     </div>
+    
   );
 };
 
@@ -104,6 +109,8 @@ export default function Home() {
   }, []);
 
   return (
+    <>
+    <Navbar/>
     <main className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 text-gray-100 overflow-hidden">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -320,5 +327,7 @@ export default function Home() {
         }
       `}</style>
     </main>
+</>
+    
   );
 }

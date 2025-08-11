@@ -49,13 +49,13 @@ async function createFee(data, school_id) {
     ]
   );
 
-  await logFeeHistory({
-    ...data,
-    total_amount: sanitizedTotalAmount,
-    amount_paid: sanitizedAmountPaid,
-    discount: sanitizedDiscount,
-    fine: sanitizedFine
-  });
+  // await logFeeHistory({
+  //   ...data,
+  //   total_amount: sanitizedTotalAmount,
+  //   amount_paid: sanitizedAmountPaid,
+  //   discount: sanitizedDiscount,
+  //   fine: sanitizedFine
+  // });
   return result;
 }
 

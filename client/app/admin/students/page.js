@@ -13,8 +13,9 @@ import {
   Mail,
   MapPin,
   CreditCard,
+  AlertCircle
 } from "lucide-react";
-import AuthWrapper from "../components/AuthWrapper";
+
 
 const API_BASE = "http://localhost:5001/student";
 
@@ -45,6 +46,7 @@ const StudentPage = () => {
   const [allStudents, setAllStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [addForm, setAddForm] = useState(initialStudent);
   const [updateForm, setUpdateForm] = useState(initialStudent);
 
@@ -96,6 +98,8 @@ const StudentPage = () => {
   const closeAddForm = () => {
     setShowAddForm(false);
     setAddForm(initialStudent);
+    setError(null);
+    setSuccess(null);
   };
 
   const addStudent = async (studentData) => {
@@ -109,20 +113,39 @@ const StudentPage = () => {
     });
     const data = await res.json();
     if (!data.success) {
-      throw new Error(data.message || "Failed to add student");
+      const error = new Error(data.message);
+      error.response = { data };
+      throw error;
     }
     return data;
   };
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
     try {
       await addStudent(addForm);
-      alert("Student added successfully!");
-      fetchStudents();
-      closeAddForm();
+      setSuccess("Student added successfully! All information has been saved.");
+      setTimeout(() => {
+        setSuccess(null);
+        fetchStudents();
+        closeAddForm();
+      }, 2000);
     } catch (err) {
-      alert(err.message);
+      let errorMessage = "Failed to add student. ";
+      if (err.response?.data?.error === "DUPLICATE_STUDENT_ID") {
+        errorMessage += "The Student ID is already in use. Please use a different Student ID.";
+      } else if (err.response?.data?.error === "DUPLICATE_EMAIL") {
+        errorMessage += "This email address is already registered. Please use a different email.";
+      } else if (err.response?.data?.error === "INVALID_EMAIL") {
+        errorMessage += "Please enter a valid email address.";
+      } else if (err.response?.data?.error === "MISSING_FIELDS") {
+        errorMessage += "Please fill in all required fields: " + err.response.data.message.split(": ")[1];
+      } else {
+        errorMessage += "Please check your information and try again.";
+      }
+      setError(errorMessage);
     }
   };
 
@@ -145,6 +168,8 @@ const StudentPage = () => {
   const closeUpdateForm = () => {
     setShowUpdateForm(false);
     setUpdateForm(initialStudent);
+    setError(null);
+    setSuccess(null);
   };
 
   const updateStudent = async (id, studentData) => {
@@ -165,6 +190,8 @@ const StudentPage = () => {
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
     const updatedData = { ...updateForm };
     delete updatedData.created_at;
     delete updatedData.updated_at;
@@ -173,11 +200,26 @@ const StudentPage = () => {
 
     try {
       await updateStudent(updateForm.id, updatedData);
-      alert("Student updated successfully!");
-      fetchStudents();
-      closeUpdateForm();
+      setSuccess("Student information updated successfully! All changes have been saved.");
+      setTimeout(() => {
+        setSuccess(null);
+        fetchStudents();
+        closeUpdateForm();
+      }, 2000);
     } catch (err) {
-      alert(err.message);
+      let errorMessage = "Failed to update student. ";
+      if (err.response?.data?.error === "DUPLICATE_STUDENT_ID") {
+        errorMessage += "The Student ID is already in use by another student.";
+      } else if (err.response?.data?.error === "DUPLICATE_EMAIL") {
+        errorMessage += "This email address is already registered to another student.";
+      } else if (err.response?.data?.error === "INVALID_EMAIL") {
+        errorMessage += "Please enter a valid email address.";
+      } else if (err.response?.data?.error === "MISSING_FIELDS") {
+        errorMessage += "Please fill in all required fields: " + err.response.data.message.split(": ")[1];
+      } else {
+        errorMessage += "Please check your information and try again.";
+      }
+      setError(errorMessage);
     }
   };
 
@@ -216,17 +258,23 @@ const StudentPage = () => {
   };
 
   // Class dropdown
+  // Sort classes in natural/increasing order (numeric-aware)
   const classes = Array.from(
     new Set(allStudents.map((s) => s.class).filter(Boolean))
-  ).sort();
+  ).sort((a, b) => {
+    // Try to compare as numbers if possible, else fallback to string
+    const numA = parseFloat(a);
+    const numB = parseFloat(b);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.localeCompare(b);
+  });
 
   const studentsToShow = selectedClass
     ? allStudents.filter((s) => s.class === selectedClass)
     : allStudents;
 
   return (
-    <AuthWrapper>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -245,30 +293,25 @@ const StudentPage = () => {
                 Add Student
               </button>
             </div>
-            <div className="max-w-md">
-              <label
-                htmlFor="class-select"
-                className="block text-sm font-medium text-gray-700 mb-2"
+            {/* Class Filter Pills */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              <button
+                className={`px-4 py-2 rounded-full border text-sm font-medium transition-all shadow-sm ${selectedClass === '' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'}`}
+                onClick={() => setSelectedClass('')}
               >
-                Select Class
-              </label>
-              <select
-                id="class-select"
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900"
-              >
-                <option value="">All Classes</option>
-                {classes.map((cls) => (
-                  <option key={cls} value={cls}>
-                    {cls}
-                  </option>
-                ))}
-              </select>
+                All Classes
+              </button>
+              {classes.map((cls) => (
+                <button
+                  key={cls}
+                  className={`px-4 py-2 rounded-full border text-sm font-medium transition-all shadow-sm ${selectedClass === cls ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'}`}
+                  onClick={() => setSelectedClass(cls)}
+                >
+                  {cls}
+                </button>
+              ))}
             </div>
-            {error && (
-              <div className="mt-4 text-red-600 text-sm">{error}</div>
-            )}
+  
           </div>
 
           {/* Students Table */}
@@ -282,13 +325,19 @@ const StudentPage = () => {
               </h2>
             </div>
             {loading ? (
-              <div className="p-8 text-center text-gray-500">Loading...</div>
+              <div className="flex flex-col items-center justify-center py-20">
+                <svg className="animate-spin h-10 w-10 text-indigo-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                <span className="text-gray-500">Loading students...</span>
+              </div>
             ) : studentsToShow.length > 0 ? (
               <div className="overflow-x-auto text-black">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
-                      <th className="px-6 py-4">AG ID</th>
+                      <th className="px-6 py-4">ID</th>
                       <th className="px-6 py-4">Student ID</th>
                       <th className="px-6 py-4">Name</th>
                       <th className="px-6 py-4">Father's Name</th>
@@ -299,33 +348,20 @@ const StudentPage = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200 pl-2">
-                    {studentsToShow.map((student) => (
-                      <tr key={student.id}>
+                    {studentsToShow.map((student, idx) => (
+                      <tr key={student.id} className={idx % 2 === 0 ? "bg-white hover:bg-indigo-50 transition-colors" : "bg-indigo-50 hover:bg-indigo-100 transition-colors"}>
                         <td className="px-6 py-4 text-center">{student.id}</td>
-                        <td className="px-6 py-4 text-center">
-                          {student.student_id || "-"}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {student.student_name}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {student.father_name}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {student.contact_no || "-"}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {student.class}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {student.dob
-                            ? new Date(student.dob).toLocaleDateString("en-IN")
-                            : "-"}
-                        </td>
+                        <td className="px-6 py-4 text-center">{student.student_id || "-"}</td>
+                        <td className="px-6 py-4 text-center">{student.student_name}</td>
+                        <td className="px-6 py-4 text-center">{student.father_name}</td>
+                        <td className="px-6 py-4 text-center">{student.contact_no || "-"}</td>
+                        <td className="px-6 py-4 text-center">{student.class}</td>
+                        <td className="px-6 py-4 text-center">{student.dob ? new Date(student.dob).toLocaleDateString("en-IN") : "-"}</td>
                         <td className="px-6 py-4">
                           <button
                             onClick={() => handleViewStudent(student)}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-center px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-center px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow"
+                            title="View Student"
                           >
                             <Eye className="w-4 h-4" />
                             View
@@ -351,6 +387,38 @@ const StudentPage = () => {
           {/* Add Student Modal */}
           {showAddForm && (
             <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50 text-black">
+              {(error || success) && (
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] w-full max-w-xl mx-auto">
+                  {error && (
+                    <div className="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-lg p-4 flex items-start">
+                      <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+                      <div className="flex-grow">
+                        <p className="font-medium text-red-800">{error}</p>
+                      </div>
+                      <button 
+                        onClick={() => setError(null)}
+                        className="ml-3 flex-shrink-0"
+                      >
+                        <X className="w-5 h-5 text-red-500 hover:text-red-700" />
+                      </button>
+                    </div>
+                  )}
+                  {success && (
+                    <div className="bg-green-50 border-l-4 border-green-500 rounded-lg shadow-lg p-4 flex items-start">
+                      <div className="text-green-500 mt-0.5 mr-3 flex-shrink-0">✓</div>
+                      <div className="flex-grow">
+                        <p className="font-medium text-green-800">{success}</p>
+                      </div>
+                      <button 
+                        onClick={() => setSuccess(null)}
+                        className="ml-3 flex-shrink-0"
+                      >
+                        <X className="w-5 h-5 text-green-500 hover:text-green-700" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
                   <h3 className="text-xl font-semibold text-white">
@@ -457,6 +525,22 @@ const StudentPage = () => {
           {/* Update Student Modal */}
           {showUpdateForm && (
             <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50 text-black">
+              {error && (
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[60] w-full max-w-xl mx-auto">
+                  <div className="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-lg p-4 flex items-start">
+                    <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+                    <div className="flex-grow">
+                      <p className="font-medium text-red-800">{error}</p>
+                    </div>
+                    <button 
+                      onClick={() => setError(null)}
+                      className="ml-3 flex-shrink-0"
+                    >
+                      <X className="w-5 h-5 text-red-500 hover:text-red-700" />
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
                   <h3 className="text-xl font-semibold text-white">
@@ -584,7 +668,7 @@ const StudentPage = () => {
                     <div className="space-y-4">
                       <div>
                         <label className="text-sm font-medium text-gray-500">
-                          ID
+                          System ID
                         </label>
                         <p className="text-lg font-semibold text-gray-900">
                           {selectedStudent.id}
@@ -730,7 +814,6 @@ const StudentPage = () => {
           )}
         </div>
       </div>
-    </AuthWrapper>
   );
 };
 
