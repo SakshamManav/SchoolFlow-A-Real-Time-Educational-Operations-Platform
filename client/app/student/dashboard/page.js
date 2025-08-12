@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import AuthWrapper from '../components/AuthWrapper';
 import {
   CalendarDays,
   Bell,
@@ -15,7 +16,7 @@ import {
 // Usage: import and render <StudentDashboard {...props} /> inside your page.
 // Tailwind CSS required. Framer Motion & lucide-react are optional but recommended.
 
-export default function StudentDashboard({
+function StudentDashboardContent({
   studentName = "Aarav",
   today = new Date(),
   timetable = [
@@ -227,5 +228,14 @@ export default function StudentDashboard({
         <div className="mt-6 text-xs text-slate-400 text-center">Need changes? Plug your real data from API or CMS — this component is built to accept props.</div>
       </div>
     </div>
+  );
+}
+
+// Wrap the dashboard with authentication
+export default function DashboardPage() {
+  return (
+    <AuthWrapper>
+      <StudentDashboardContent />
+    </AuthWrapper>
   );
 }

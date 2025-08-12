@@ -1,4 +1,19 @@
 const db = require("../../database/db");
+const bcrypt = require('bcrypt');
+
+function generateUsername(first_name, dob, phone) {
+  // Extract year, month, day from the date string (YYYY-MM-DD)
+  const dateObj = new Date(dob);
+  const yy = dateObj.getFullYear().toString().slice(-2);
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  
+  // Get last 4 digits of phone number
+  const last4Phone = phone ? phone.slice(-4) : '0000';
+  
+  // Create username: firstname + YYMMDD + last4digits
+  return `${first_name.toLowerCase()}${yy}${mm}${dd}${last4Phone}`;
+}
 
 async function createStudent(data, school_id) {
   try {
@@ -25,11 +40,18 @@ async function createStudent(data, school_id) {
       throw new Error("Invalid date format for DOB, use YYYY-MM-DD");
     }
 
-    // Check for duplicate student_id and email
-    if (student_id || email) {
+    // Generate username
+    const username = generateUsername(student_name.split(' ')[0], dob, contact_no);
+
+    // Hash the password (using DOB as password in YYYY-MM-DD format)
+    const salt = await bcrypt.genSalt(10);
+    const hashed_password = await bcrypt.hash(dob, salt);
+
+    // Check for duplicate student_id, email, and username
+    if (student_id || email || username) {
       const [existing] = await db.execute(
-        "SELECT student_id, email FROM student WHERE (student_id = ? OR email = ?) AND school_id = ?",
-        [student_id, email, school_id]
+        "SELECT student_id, email, username FROM student WHERE (student_id = ? OR email = ? OR username = ?) AND school_id = ?",
+        [student_id, email, username, school_id]
       );
       
       if (existing.length > 0) {
@@ -39,6 +61,9 @@ async function createStudent(data, school_id) {
         if (existing[0].email === email) {
           throw new Error("DUPLICATE_EMAIL");
         }
+        if (existing[0].username === username) {
+          throw new Error("DUPLICATE_USERNAME");
+        }
       }
     }
 
@@ -46,12 +71,12 @@ async function createStudent(data, school_id) {
       `INSERT INTO student (
         student_id, student_name, class, section, father_name, mother_name, dob,
         gender, contact_no, admission_year, prev_school_name, address,
-        school_id, national_id, email, stud_pic_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        school_id, national_id, email, stud_pic_url, username, hashed_password, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         student_id || null, student_name, cls, section || null, father_name, mother_name, dob,
         gender || null, contact_no || null, admission_year || null, prev_school_name || null, address,
-        school_id, national_id, email, stud_pic_url || null
+        school_id, national_id, email, stud_pic_url || null, username, hashed_password, 'active'
       ]
     );
 
@@ -69,7 +94,14 @@ async function createStudent(data, school_id) {
 
 async function getAllStudents(school_id) {
   try {
-    const [rows] = await db.execute("SELECT * FROM student WHERE school_id = ?", [school_id]);
+    const [rows] = await db.execute(
+      `SELECT id, student_id, student_name, class, section, father_name, 
+      mother_name, dob, gender, contact_no, admission_year, prev_school_name, 
+      address, school_id, national_id, email, username, status, last_login, 
+      stud_pic_url, created_at, updated_at 
+      FROM student WHERE school_id = ?`, 
+      [school_id]
+    );
     return rows;
   } catch (err) {
     throw new Error(`Database error: ${err.message}`);
@@ -78,7 +110,14 @@ async function getAllStudents(school_id) {
 
 async function getStudentById(id, school_id) {
   try {
-    const [rows] = await db.execute("SELECT * FROM student WHERE id = ? AND school_id = ?", [id, school_id]);
+    const [rows] = await db.execute(
+      `SELECT id, student_id, student_name, class, section, father_name, 
+      mother_name, dob, gender, contact_no, admission_year, prev_school_name, 
+      address, school_id, national_id, email, username, status, last_login, 
+      stud_pic_url, created_at, updated_at 
+      FROM student WHERE id = ? AND school_id = ?`, 
+      [id, school_id]
+    );
     if (rows.length === 0) {
       throw new Error("Student not found");
     }

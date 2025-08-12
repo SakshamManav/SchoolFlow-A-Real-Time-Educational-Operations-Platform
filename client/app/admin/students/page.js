@@ -35,6 +35,8 @@ const initialStudent = {
   national_id: "",
   email: "",
   stud_pic_url: "",
+  username: "",
+  status: "active",
 };
 
 const StudentPage = () => {
@@ -470,6 +472,25 @@ const StudentPage = () => {
                             <option value="Female">Female</option>
                             <option value="Others">Others</option>
                           </select>
+                        ) : field === "status" ? (
+                          <select
+                            name={field}
+                            value={addForm[field]}
+                            onChange={handleAddFormChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        ) : field === "username" ? (
+                          <input
+                            type="text"
+                            name={field}
+                            value={addForm[field]}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100"
+                            readOnly
+                            placeholder="Username will be auto-generated"
+                          />
                         ) : field === "dob" ? (
                           <input
                             type="date"
@@ -592,6 +613,24 @@ const StudentPage = () => {
                             <option value="Female">Female</option>
                             <option value="Others">Others</option>
                           </select>
+                        ) : field === "status" ? (
+                          <select
+                            name={field}
+                            value={updateForm[field] || ""}
+                            onChange={handleUpdateFormChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        ) : field === "username" ? (
+                          <input
+                            type="text"
+                            name={field}
+                            value={updateForm[field] || ""}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100"
+                            readOnly
+                          />
                         ) : field === "dob" ? (
                           <input
                             type="date"
@@ -651,7 +690,7 @@ const StudentPage = () => {
           {/* View Student Modal */}
           {showPopup && selectedStudent && (
             <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center p-4 z-50">
-              <div className="max-h-[80%] bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-screen overflow-y-auto">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto">
                 <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 rounded-t-2xl flex justify-between items-center">
                   <h3 className="text-xl font-semibold text-white">
                     Student Details
@@ -747,6 +786,31 @@ const StudentPage = () => {
                     </div>
                   </div>
                   <div className="mt-6 grid grid-cols-1 gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-gray-500" />
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">
+                            Username
+                          </label>
+                          <p className="text-lg text-gray-900">
+                            {selectedStudent.username || "-"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="ml-6">
+                        <label className="text-sm font-medium text-gray-500">
+                          Status
+                        </label>
+                        <p className={`text-lg font-medium ${
+                          selectedStudent.status === 'active' 
+                            ? 'text-green-600' 
+                            : 'text-red-600'
+                        }`}>
+                          {selectedStudent.status?.charAt(0).toUpperCase() + selectedStudent.status?.slice(1) || "-"}
+                        </p>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-gray-500" />
                       <div>
