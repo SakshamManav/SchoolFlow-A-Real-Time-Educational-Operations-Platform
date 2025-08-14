@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Create JWT token
+        // Create JWT token with role information
         const token = jwt.sign(
             { 
                 id: student.id,
@@ -63,7 +63,8 @@ router.post('/login', async (req, res) => {
                 class: student.class,
                 section: student.section,
                 school_id: student.school_id,
-                username: student.username
+                username: student.username,
+                role: 'student' // Add role information
             },
             SECRET_KEY,
             { expiresIn: '24h' }

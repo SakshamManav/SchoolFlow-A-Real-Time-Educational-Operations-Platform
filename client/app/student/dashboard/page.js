@@ -1,8 +1,7 @@
 "use client";
-
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import { motion } from "framer-motion";
-import AuthWrapper from '../components/AuthWrapper';
 import {
   CalendarDays,
   Bell,
@@ -12,28 +11,69 @@ import {
   Calendar,
 } from "lucide-react";
 
-// Student Dashboard - Single-file React component for Next.js (App Router friendly)
-// Usage: import and render <StudentDashboard {...props} /> inside your page.
-// Tailwind CSS required. Framer Motion & lucide-react are optional but recommended.
+function StudentDashboard() {
+  const [studentData, setStudentData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const today = new Date();
 
-function StudentDashboardContent({
-  studentName = "Aarav",
-  today = new Date(),
-  timetable = [
+  
+  useEffect(() => {
+    const studentToken = localStorage.getItem('student_token');
+    if (!studentToken) {
+      alert('Session expired or not logged in. Please login again.');
+      // Uncomment the next line to enable redirect
+      // router.push('/student/login');
+      setLoading(false);
+      return;
+    }
+    const studentDataStr = localStorage.getItem('student_user');
+    if (studentDataStr) {
+      setStudentData(JSON.parse(studentDataStr));
+    }
+    setLoading(false);
+  }, []);
+  // Hydration guard
+  // if (!hydrated || loading) {
+  //   return (
+  //     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+  //       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+  //     </div>
+  //   );
+  // }
+   
+  
+
+  // if (!studentData) {
+  //   return null;
+  // }
+
+  // Default data for demonstration
+  const timetable = [
     { time: "09:00 - 09:45", subject: "Mathematics", room: "A101" },
     { time: "10:00 - 10:45", subject: "English", room: "B204" },
     { time: "11:00 - 11:45", subject: "Physics", room: "C307" },
-  ],
-  announcements = [
+  ];
+
+  const announcements = [
     { title: "Sports Day on Aug 25", excerpt: "All students must assemble at 7:30 AM." },
     { title: "Library Timings", excerpt: "Library will remain open till 6 PM on weekdays." },
-  ],
-  stats = { attendance: 92, nextFeeDate: "2025-08-20", pendingFees: "₹0" },
-  deadlines = [
+  ];
+
+  const stats = { 
+    attendance: 92, 
+    nextFeeDate: "2025-08-20", 
+    pendingFees: "₹0" 
+  };
+
+  const deadlines = [
     { title: "Math Assignment: Integrals", due: "2025-08-12" },
     { title: "Physics Lab Report", due: "2025-08-15" },
-  ],
-}) {
+  ];
+
+  if (!studentData) {
+    return <div className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">Loading...</div>;
+  }
   const friendlyDate = (d) => new Date(d).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 
   return (
@@ -42,7 +82,7 @@ function StudentDashboardContent({
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-slate-800">Welcome back, <span className="text-indigo-600">{studentName}</span>!</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold text-slate-800">Welcome back, <span className="text-indigo-600">{studentData.name}</span>!</h1>
             <p className="text-sm text-slate-500 mt-1">{friendlyDate(today)} • Good to see you — here’s what’s happening today.</p>
           </div>
 
@@ -52,10 +92,10 @@ function StudentDashboardContent({
               Notifications
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-semibold">{studentName.charAt(0)}</div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-semibold">{studentData.name.charAt(0)}</div>
               <div className="text-sm text-slate-600">
-                <div className="font-medium">{studentName}</div>
-                <div className="text-xs">Class 10 - Section A</div>
+                <div className="font-medium">{studentData.name}</div>
+                <div className="text-xs">Class {studentData.class || 'N/A'} - Section {studentData.section || 'N/A'}</div>
               </div>
             </div>
           </div>
@@ -229,13 +269,10 @@ function StudentDashboardContent({
       </div>
     </div>
   );
-}
+  }
 
 // Wrap the dashboard with authentication
 export default function DashboardPage() {
-  return (
-    <AuthWrapper>
-      <StudentDashboardContent />
-    </AuthWrapper>
-  );
+  return <StudentDashboard />;
 }
+

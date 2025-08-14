@@ -1,27 +1,100 @@
 "use client"
 import Head from 'next/head';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Profile() {
-  // Mock student data (replace with actual API data in a real app)
-  const [student, setStudent] = useState({
-    student_id: "STU12345",
-    student_name: "Alex Smith",
-    class: "10",
-    section: "A",
-    father_name: "John Smith",
-    mother_name: "Emma Smith",
-    dob: "2008-05-15",
-    gender: "Male",
-    contact_no: "+91-98765-43210",
-    admission_year: "2020",
-    current_school: "Delhi Public School",
-    prev_school_name: "Sunrise Academy",
-    address: "123, Green Avenue, New Delhi, India",
-    national_id: "IND123456789",
-    email: "alex.smith@example.com",
-    stud_pic_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuAXCWJGafTH5JcaOyDlvBCtlUxQcE29E47g&s",
-  });
+  const [student, setStudent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+        const token = localStorage.getItem("student_token");
+        const studentUser = localStorage.getItem("student_user");
+        console.log(token)
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+
+        let studentId;
+        if (studentUser) {
+          const userData = JSON.parse(studentUser);
+          console.log(userData)
+          studentId = userData.id;
+        }
+
+        if (!studentId) {
+          setError('Student ID not found');
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`http://localhost:5001/student/profile/getstudent/${studentId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          setStudent(result.data);
+        } else {
+          setError(result.message || 'Failed to fetch student data');
+        }
+      } catch (err) {
+        console.error('Error fetching student data:', err);
+        setError('Network error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentData();
+  }, [router]);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-indigo-600 font-medium">Loading student profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-lg shadow-lg">
+          <div className="text-red-500 text-xl mb-4">⚠️</div>
+          <p className="text-red-600 font-medium mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!student) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-lg shadow-lg">
+          <p className="text-gray-600">No student data available</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
@@ -35,7 +108,7 @@ export default function Profile() {
         {/* School Name Banner */}
         <div className="bg-gradient-to-r from-indigo-600 to-blue-500 -mx-8 -mt-8 mb-8 p-4 rounded-t-2xl">
           <h2 className="text-2xl font-bold text-white text-center tracking-wide">
-            {student.current_school}
+            {student.school_id ? `School ID: ${student.school_id}` : 'Student Profile'}
           </h2>
         </div>
 
@@ -46,14 +119,14 @@ export default function Profile() {
           <div className="flex flex-col items-center space-y-4 p-6 bg-gradient-to-b from-indigo-50 to-white rounded-xl shadow-md">
             <div className="relative">
               <img
-                src={student.stud_pic_url}
+                src={student.stud_pic_url || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuAXCWJGafTH5JcaOyDlvBCtlUxQcE29E47g&s"}
                 alt="Profile Picture"
                 className="w-40 h-40 rounded-full object-cover border-4 border-indigo-300 shadow-lg transition-transform duration-300 hover:scale-105"
               />
               <div className="absolute bottom-0 right-0 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></div>
             </div>
             <h2 className="text-2xl font-bold text-gray-800">{student.student_name}</h2>
-            <p className="text-md text-indigo-600 font-medium bg-indigo-50 px-4 py-1 rounded-full">ID: {student.student_id}</p>
+            <p className="text-md text-indigo-600 font-medium bg-indigo-50 px-4 py-1 rounded-full">ID: {student.student_id || student.id}</p>
           </div>
 
           {/* Personal Details */}
@@ -83,7 +156,7 @@ export default function Profile() {
               </div>
               <div className="space-y-2 p-4 bg-gray-50 rounded-lg transition-all duration-300 hover:bg-indigo-50">
                 <p className="text-sm font-medium text-indigo-600">Contact Number</p>
-                <p className="text-gray-800 font-semibold">{student.contact_no}</p>
+                <p className="text-gray-800 font-semibold">{student.contact_no || 'Not provided'}</p>
               </div>
               <div className="space-y-2 p-4 bg-gray-50 rounded-lg transition-all duration-300 hover:bg-indigo-50">
                 <p className="text-sm font-medium text-indigo-600">Email</p>
@@ -124,14 +197,14 @@ export default function Profile() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <span className="text-2xl font-bold text-indigo-800">{student.admission_year}</span>
+                  <span className="text-2xl font-bold text-indigo-800">{student.admission_year || 'N/A'}</span>
                 </div>
                 <p className="text-sm font-medium text-indigo-600">Admission Year</p>
               </div>
               <div className="bg-indigo-50 p-4 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md hover:bg-indigo-100">
                 <p className="text-sm font-medium text-indigo-600 mb-2">Previous School</p>
-                <p className="text-gray-800 font-semibold truncate" title={student.prev_school_name}>
-                  {student.prev_school_name}
+                <p className="text-gray-800 font-semibold truncate" title={student.prev_school_name || 'Not provided'}>
+                  {student.prev_school_name || 'Not provided'}
                 </p>
               </div>
             </div>

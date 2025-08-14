@@ -13,9 +13,9 @@ export default function StudentLoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If already logged in, redirect to dashboard
-    const token = localStorage.getItem('token');
-    if (token) {
+    // Check if token exists and redirect only if not already on dashboard
+    const studentToken = localStorage.getItem('student_token');
+    if (studentToken) {
       router.replace('/student/dashboard');
     }
   }, [router]);
@@ -24,7 +24,7 @@ export default function StudentLoginPage() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -44,34 +44,27 @@ export default function StudentLoginPage() {
 
       const data = await response.json();
       console.log('Login response:', data);
-      
+
       if (!data.success) {
-        throw new Error(data.message || 'Login failed');
+        alert(data.message || 'Login failed');
+        setError(data.message || 'Login failed');
+        setLoading(false);
+        return;
       }
 
       // Save token and user data
-      localStorage.setItem('token', data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.student));
+      localStorage.setItem('student_token', data.data.token);
+      localStorage.setItem('student_user', JSON.stringify(data.data.student));
 
-      console.log('Saving data and redirecting...');
-      
-      // Save data first
-      localStorage.setItem('token', data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.student));
-      
-      // Small delay to ensure storage is complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Use replace and force a refresh
-      window.location.href = '/student/dashboard';
+      alert(data.message || 'Login successful!');
+      router.push('/student/dashboard');
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'An error occurred during login');
+      setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white rounded-2xl shadow-xl p-8">

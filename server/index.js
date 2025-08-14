@@ -25,6 +25,7 @@ app.use("/timetable", require("./routes/admin/timetableRoute.js"));
 
 // student -- >>>
 app.use("/student/auth", require("./routes/student/auth.js")); // student login
+app.use("/student/profile", require("./routes/student/studentroute.js")); // student profile and password update
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
