@@ -14,17 +14,24 @@ export default function Profile() {
       try {
         const token = localStorage.getItem("student_token");
         const studentUser = localStorage.getItem("student_user");
-        console.log(token)
+        
         if (!token) {
-          router.push('/login');
+          router.push('/student/login');
           return;
         }
 
         let studentId;
         if (studentUser) {
-          const userData = JSON.parse(studentUser);
-          console.log(userData)
-          studentId = userData.id;
+          try {
+            const userData = JSON.parse(studentUser);
+            studentId = userData.id;
+          } catch (parseError) {
+            console.error('Error parsing student data:', parseError);
+            localStorage.removeItem('student_user');
+            localStorage.removeItem('student_token');
+            router.push('/student/login');
+            return;
+          }
         }
 
         if (!studentId) {

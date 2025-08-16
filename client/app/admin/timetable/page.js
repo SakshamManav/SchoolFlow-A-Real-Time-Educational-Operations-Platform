@@ -39,7 +39,7 @@ export default function AdminTimetable() {
       try {
         setLoading(true);
         const response = await fetch(
-          "http://localhost:5001/timetable/classes",
+          "http://localhost:5001/admin/timetable/classes",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -83,7 +83,7 @@ export default function AdminTimetable() {
   const handleViewClass = async (classId) => {
     try {
       const response = await fetch(
-        `http://localhost:5001/timetable/timetable/${classId}`,
+        `http://localhost:5001/admin/timetable/timetable/${classId}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
@@ -184,7 +184,7 @@ export default function AdminTimetable() {
 
     try {
       const response = await fetch(
-        `http://localhost:5001/timetable/update/${editingClass}`,
+        `http://localhost:5001/admin/timetable/update/${editingClass}`,
         {
           method: "PUT",
           headers: {
@@ -235,7 +235,7 @@ export default function AdminTimetable() {
         schoolDays: createFormData.schoolDays,
         timetable: newTimetable,
       });
-      const response = await fetch("http://localhost:5001/timetable/create", {
+      const response = await fetch("http://localhost:5001/admin/timetable/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -291,7 +291,7 @@ export default function AdminTimetable() {
     try {
       if (deleteConfirmation.type === "class") {
         const response = await fetch(
-          `http://localhost:5001/timetable/delete/${deleteConfirmation.classId}`,
+          `http://localhost:5001/admin/timetable/delete/${deleteConfirmation.classId}`,
           {
             method: "DELETE",
             headers: {
@@ -311,7 +311,7 @@ export default function AdminTimetable() {
         }
       } else if (deleteConfirmation.type === "slot") {
         const response = await fetch(
-          "http://localhost:5001/timetable/delete/slot",
+          "http://localhost:5001/admin/timetable/delete/slot",
           {
             method: "DELETE",
             headers: {

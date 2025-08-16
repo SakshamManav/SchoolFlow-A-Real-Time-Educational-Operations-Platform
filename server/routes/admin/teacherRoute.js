@@ -29,6 +29,17 @@ router.post('/create', authenticateToken, async (req, res) => {
   }
 });
 
+// Get all teachers for the authenticated school (protected) - root endpoint
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const teachers = await teacherQueries.getAllTeachers(db, req.user.id);
+    res.json(teachers);
+  } catch (error) {
+    console.error('Get teachers error:', error);
+    res.status(500).json({ error: 'Error fetching teachers', details: error.message });
+  }
+});
+
 // Get all teachers for the authenticated school (protected)
 router.get('/getALL', authenticateToken, async (req, res) => {
   try {

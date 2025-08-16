@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const studentModel = require('../../models/student/student');
+const StudentAttendance = require('../../models/student/attendance');
 const studentAuth = require('../../middleware/student/authmiddleware');
 
 
@@ -41,6 +42,259 @@ router.put('/update-password/:id', studentAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: `No student with ID ${req.params.id} found`, error: err.message });
     }
     res.status(500).json({ success: false, message: 'Failed to update password', error: err.message });
+  }
+});
+
+// Get student's attendance records
+router.get('/attendance/:student_id', studentAuth, async (req, res) => {
+  try {
+    const student_id = req.params.student_id;
+    const { subject, start_date, end_date, status, limit } = req.query;
+    const school_id = req.user.school_id;
+
+    // Ensure student can only access their own attendance
+    if (req.user && req.user.id && String(req.user.id) !== String(student_id)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Forbidden: You can only view your own attendance records' 
+      });
+    }
+
+    const filters = {
+      school_id: parseInt(school_id),
+      subject,
+      start_date,
+      end_date,
+      status,
+      limit
+    };
+
+    const attendance = await StudentAttendance.getStudentAttendance(parseInt(student_id), filters);
+    res.json({ 
+      success: true, 
+      message: 'Attendance records retrieved successfully', 
+      data: attendance 
+    });
+  } catch (err) {
+    console.error('Error fetching student attendance:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve attendance records', 
+      error: err.message 
+    });
+  }
+});
+
+// Get student's attendance statistics
+router.get('/attendance-stats/:student_id', studentAuth, async (req, res) => {
+  try {
+    console.log('=== ATTENDANCE STATS ROUTE HIT ===');
+    console.log('Request params:', req.params);
+    console.log('Request query:', req.query);
+    console.log('Authenticated user:', req.user);
+    console.log('=====================================');
+    
+    const student_id = req.params.student_id;
+    const { subject, start_date, end_date } = req.query;
+    const school_id = req.user.school_id;
+
+    // Ensure student can only access their own stats
+    if (req.user && req.user.id && String(req.user.id) !== String(student_id)) {
+      console.log('Access denied: User ID mismatch', { userStudentID: req.user.student_id, requestedID: student_id });
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Forbidden: You can only view your own attendance statistics' 
+      });
+    }
+
+    const filters = {
+      subject,
+      start_date,
+      end_date
+    };
+
+    console.log('Calling StudentAttendance.getStudentAttendanceStats with:', { student_id, school_id, filters });
+    const stats = await StudentAttendance.getStudentAttendanceStats(parseInt(student_id), parseInt(school_id), filters);
+    console.log('Stats result:', stats);
+    
+    res.json({ 
+      success: true, 
+      message: 'Attendance statistics retrieved successfully', 
+      data: stats 
+    });
+  } catch (err) {
+    console.error('Error fetching attendance stats:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve attendance statistics', 
+      error: err.message 
+    });
+  }
+});
+
+// Get subject-wise attendance for student
+router.get('/subject-wise-attendance/:student_id', studentAuth, async (req, res) => {
+  try {
+    const student_id = req.params.student_id;
+    const { start_date, end_date } = req.query;
+    const school_id = req.user.school_id;
+
+    // Ensure student can only access their own data
+    if (req.user && req.user.id && String(req.user.id) !== String(student_id)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Forbidden: You can only view your own attendance data' 
+      });
+    }
+
+    const filters = {
+      start_date,
+      end_date
+    };
+
+    const subjectAttendance = await StudentAttendance.getSubjectWiseAttendance(parseInt(student_id), parseInt(school_id), filters);
+    res.json({ 
+      success: true, 
+      message: 'Subject-wise attendance retrieved successfully', 
+      data: subjectAttendance 
+    });
+  } catch (err) {
+    console.error('Error fetching subject-wise attendance:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve subject-wise attendance', 
+      error: err.message 
+    });
+  }
+});
+
+// Get monthly attendance summary
+router.get('/monthly-attendance/:student_id/:year/:month', studentAuth, async (req, res) => {
+  try {
+    const { student_id, year, month } = req.params;
+    const school_id = req.user.school_id;
+
+    // Ensure student can only access their own data
+    if (req.user && req.user.id && String(req.user.id) !== String(student_id)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Forbidden: You can only view your own attendance data' 
+      });
+    }
+
+    const monthlyAttendance = await StudentAttendance.getMonthlyAttendance(parseInt(student_id), parseInt(school_id), parseInt(year), parseInt(month));
+    res.json({ 
+      success: true, 
+      message: 'Monthly attendance retrieved successfully', 
+      data: monthlyAttendance 
+    });
+  } catch (err) {
+    console.error('Error fetching monthly attendance:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve monthly attendance', 
+      error: err.message 
+    });
+  }
+});
+
+// Get recent attendance records
+router.get('/recent-attendance/:student_id', studentAuth, async (req, res) => {
+  try {
+    const student_id = req.params.student_id;
+    const { limit = 10 } = req.query;
+    const school_id = req.user.school_id;
+
+    // Ensure student can only access their own data
+    if (req.user && req.user.id && String(req.user.id) !== String(student_id)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Forbidden: You can only view your own attendance data' 
+      });
+    }
+
+    console.log('Getting recent attendance for:', { student_id, school_id, limit: parseInt(limit) });
+    const recentAttendance = await StudentAttendance.getRecentAttendance(parseInt(student_id), parseInt(school_id), parseInt(limit));
+    res.json({ 
+      success: true, 
+      message: 'Recent attendance retrieved successfully', 
+      data: recentAttendance 
+    });
+  } catch (err) {
+    console.error('Error fetching recent attendance:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve recent attendance', 
+      error: err.message 
+    });
+  }
+});
+
+// Get attendance by date range
+router.get('/attendance-range/:student_id', studentAuth, async (req, res) => {
+  try {
+    const student_id = req.params.student_id;
+    const { start_date, end_date } = req.query;
+    const school_id = req.user.school_id;
+
+    // Ensure student can only access their own data
+    if (req.user && req.user.id && String(req.user.id) !== String(student_id)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Forbidden: You can only view your own attendance data' 
+      });
+    }
+
+    if (!start_date || !end_date) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Both start_date and end_date are required' 
+      });
+    }
+
+    const attendanceRange = await StudentAttendance.getAttendanceByDateRange(student_id, school_id, start_date, end_date);
+    res.json({ 
+      success: true, 
+      message: 'Attendance range retrieved successfully', 
+      data: attendanceRange 
+    });
+  } catch (err) {
+    console.error('Error fetching attendance range:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve attendance range', 
+      error: err.message 
+    });
+  }
+});
+
+// Get attendance percentage for specific subject
+router.get('/subject-percentage/:student_id/:subject', studentAuth, async (req, res) => {
+  try {
+    const { student_id, subject } = req.params;
+    const school_id = req.user.school_id;
+
+    // Ensure student can only access their own data
+    if (req.user && req.user.id && String(req.user.id) !== String(student_id)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Forbidden: You can only view your own attendance data' 
+      });
+    }
+
+    const subjectPercentage = await StudentAttendance.getSubjectAttendancePercentage(student_id, school_id, subject);
+    res.json({ 
+      success: true, 
+      message: 'Subject attendance percentage retrieved successfully', 
+      data: subjectPercentage 
+    });
+  } catch (err) {
+    console.error('Error fetching subject attendance percentage:', err.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve subject attendance percentage', 
+      error: err.message 
+    });
   }
 });
 

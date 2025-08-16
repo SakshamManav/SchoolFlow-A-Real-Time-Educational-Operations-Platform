@@ -164,7 +164,7 @@ export default function AuthPages() {
       let response;
       if (isLogin) {
         // Login API
-        response = await fetch("http://localhost:5001/api/auth/login", {
+        response = await fetch("http://localhost:5001/admin/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -174,7 +174,7 @@ export default function AuthPages() {
         });
       } else {
         // Register API
-        response = await fetch("http://localhost:5001/api/auth/register", {
+        response = await fetch("http://localhost:5001/admin/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

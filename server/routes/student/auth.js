@@ -67,7 +67,7 @@ router.post('/login', async (req, res) => {
                 role: 'student' // Add role information
             },
             SECRET_KEY,
-            { expiresIn: '24h' }
+            
         );
 
         // Update last login time

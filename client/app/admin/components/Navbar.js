@@ -86,6 +86,7 @@ export default function Navbar() {
               { href: "/admin/students", label: "Students" },
               { href: "/admin/fees", label: "Fees" },
               { href: "/admin/teachers", label: "Teachers" },
+              { href: "/admin/attendance", label: "Attendance" },
               {href:"/admin/timetable", label: "Timetable" }
             ].map((item) => (
               <Link
@@ -190,10 +191,11 @@ export default function Navbar() {
           <div className="md:hidden border-t border-white/20 py-4 animate-in slide-in-from-top-2 duration-200">
             <div className="space-y-2">
               {[
-                { href: "/students", label: "Students" },
-                { href: "/fees", label: "Fees" },
-                { href: "/teachers", label: "Teachers" },
-                {href:"/timetable", label: "Timetable" }
+                { href: "/admin/students", label: "Students" },
+                { href: "/admin/fees", label: "Fees" },
+                { href: "/admin/teachers", label: "Teachers" },
+                { href: "/admin/attendance", label: "Attendance" },
+                {href:"/admin/timetable", label: "Timetable" }
               ].map((item) => (
                 <Link
                   key={item.href}

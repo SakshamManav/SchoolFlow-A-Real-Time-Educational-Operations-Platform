@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import AuthWrapper from "../components/AuthWrapper";
 
-const API_BASE = "http://localhost:5001/api/classes";
+const API_BASE = "http://localhost:5001/admin/api/classes";
 
 const initialClass = {
   class_name: "",
@@ -71,7 +71,7 @@ const ClassManagementPage = () => {
   const fetchTeachers = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5001/api/teachers", {
+      const res = await fetch("http://localhost:5001/admin/api/teachers", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 
-const API_BASE = "http://localhost:5001/student";
+const API_BASE = "http://localhost:5001/admin/student";
 
 const initialStudent = {
   student_id: "",

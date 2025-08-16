@@ -32,8 +32,8 @@ const FeesPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const STUDENT_API_BASE_URL = 'http://localhost:5001/student';
-  const FEES_API_BASE_URL = 'http://localhost:5001/fees';
+  const STUDENT_API_BASE_URL = 'http://localhost:5001/admin/student';
+  const FEES_API_BASE_URL = 'http://localhost:5001/admin/fees';
 
   // Fetch all students
   useEffect(() => {

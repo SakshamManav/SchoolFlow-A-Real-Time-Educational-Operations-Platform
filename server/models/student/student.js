@@ -15,7 +15,16 @@ async function getStudentById(id) {
 		if (rows.length === 0) {
 			throw new Error('Student not found');
 		}
-		return rows[0];
+		
+		const student = rows[0];
+		
+		// Format the date of birth to YYYY-MM-DD
+		if (student.dob) {
+			const date = new Date(student.dob);
+			student.dob = date.toISOString().split('T')[0];
+		}
+		
+		return student;
 	} catch (err) {
 		throw new Error(err.message === 'Student not found' ? err.message : `Database error: ${err.message}`);
 	}

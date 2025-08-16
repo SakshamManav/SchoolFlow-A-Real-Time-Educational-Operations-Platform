@@ -24,7 +24,7 @@ const TeachersPage = () => {
   const roles = ['teacher', 'head_teacher', 'admin'];
 
   // API base URL
-  const API_URL = 'http://localhost:5001/teacher';
+  const API_URL = 'http://localhost:5001/admin/teacher';
 
   // Fetch teachers
   useEffect(() => {
