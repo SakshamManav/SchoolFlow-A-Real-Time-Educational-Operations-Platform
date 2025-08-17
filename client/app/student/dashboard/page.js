@@ -140,8 +140,8 @@ function StudentDashboard() {
             <p className="text-sm text-slate-500 mt-1">{friendlyDate(today)} • Good to see you — here's what's happening today.</p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <button className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm text-sm hover:shadow-md">
+          <div className="text-black flex items-center gap-4">
+            <button className=" hidden md:inline-flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm text-sm hover:shadow-md">
               <Bell className="w-4 h-4" />
               Notifications
             </button>

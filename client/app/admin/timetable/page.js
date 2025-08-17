@@ -8,21 +8,93 @@ export default function AdminTimetable() {
   const [loading, setLoading] = useState(true);
   const [viewClass, setViewClass] = useState(null);
   const [editingClass, setEditingClass] = useState(null);
+  const [editingTimetable, setEditingTimetable] = useState({});
   const [creatingClass, setCreatingClass] = useState(false);
   const [formData, setFormData] = useState({});
   const [createFormData, setCreateFormData] = useState({
     classId: "",
     className: "", // Added className
     schoolDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+    selectedLectures: ["1st Lecture", "2nd Lecture", "3rd Lecture", "4th Lecture", "5th Lecture", "6th Lecture"], // Default 6 lectures
     timetable: {},
   });
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
-  const timeSlots = [
-    "09:00 AM - 10:00 AM",
-    "10:15 AM - 11:15 AM",
-    "11:30 AM - 12:30 PM",
-    "01:30 PM - 02:30 PM",
-  ];
+  // Replace timeSlots with lecture numbers (up to 10)
+  const lectureSlots = Array.from({ length: 10 }, (_, i) => `${i + 1}${getOrdinal(i + 1)} Lecture`);
+
+  function getOrdinal(n) {
+    if (n === 1) return 'st';
+    if (n === 2) return 'nd';
+    if (n === 3) return 'rd';
+    return 'th';
+  }
+
+  // Migration function to convert old time-based data to new lecture-based format
+  const migrateTimetableData = (timetable) => {
+    if (!timetable) return {};
+    
+    const oldTimeSlots = [
+      "09:00 AM - 10:00 AM",
+      "10:15 AM - 11:15 AM", 
+      "11:30 AM - 12:30 PM",
+      "01:30 PM - 02:30 PM",
+    ];
+    
+    const migratedTimetable = {};
+    
+    Object.keys(timetable).forEach(day => {
+      migratedTimetable[day] = [];
+      
+      timetable[day].forEach(slot => {
+        // Check if this is old format (time-based) and convert to new format
+        const oldTimeIndex = oldTimeSlots.indexOf(slot.time);
+        if (oldTimeIndex !== -1) {
+          // Convert old time slot to lecture format
+          const lectureNumber = oldTimeIndex + 1;
+          const lectureName = `${lectureNumber}${getOrdinal(lectureNumber)} Lecture`;
+          migratedTimetable[day].push({
+            ...slot,
+            time: lectureName
+          });
+        } else {
+          // Already in new format or keep as is
+          migratedTimetable[day].push(slot);
+        }
+      });
+    });
+    
+    return migratedTimetable;
+  };
+
+  // Function to get all lectures that should be displayed (both filled and intentionally empty)
+  const getDisplayLectures = (timetable) => {
+    if (!timetable) return [];
+    
+    const allLecturesInData = new Set();
+    const maxLectureNumber = { value: 0 };
+    
+    // Find all lectures mentioned in the data and the highest lecture number
+    Object.keys(timetable).forEach(day => {
+      timetable[day].forEach(slot => {
+        allLecturesInData.add(slot.time);
+        // Extract lecture number to find the maximum
+        const match = slot.time.match(/(\d+)/);
+        if (match) {
+          const lectureNum = parseInt(match[1]);
+          maxLectureNumber.value = Math.max(maxLectureNumber.value, lectureNum);
+        }
+      });
+    });
+    
+    // Create a complete list from 1st lecture to the highest found lecture
+    const displayLectures = [];
+    for (let i = 1; i <= maxLectureNumber.value; i++) {
+      const lectureName = `${i}${getOrdinal(i)} Lecture`;
+      displayLectures.push(lectureName);
+    }
+    
+    return displayLectures;
+  };
   const possibleDays = [
     "Monday",
     "Tuesday",
@@ -66,7 +138,10 @@ export default function AdminTimetable() {
       }
     };
     fetchClasses();
+  }, []);
 
+  // Set current day on client side only to avoid hydration mismatch
+  useEffect(() => {
     const days = [
       "Sunday",
       "Monday",
@@ -90,7 +165,12 @@ export default function AdminTimetable() {
       );
       const { success, data } = await response.json();
       if (success) {
-        setViewClass(data);
+        // Migrate old time-based data to new lecture-based format
+        const migratedData = {
+          ...data,
+          timetable: migrateTimetableData(data.timetable)
+        };
+        setViewClass(migratedData);
       } else {
         console.error("Failed to fetch timetable:", data);
       }
@@ -100,17 +180,42 @@ export default function AdminTimetable() {
   };
 
   // Handle edit button click
-  const handleEditClass = (classId, timetable, schoolDays) => {
+  const handleEditClass = async (classId, timetable, schoolDays) => {
     setEditingClass(classId);
+    
+    // If timetable is empty, fetch it from server
+    let actualTimetable = timetable;
+    if (!timetable || Object.keys(timetable).length === 0) {
+      try {
+        const response = await fetch(
+          `http://localhost:5001/admin/timetable/timetable/${classId}`,
+          {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          }
+        );
+        const { success, data } = await response.json();
+        if (success) {
+          actualTimetable = data.timetable;
+        }
+      } catch (error) {
+        console.error("Error fetching timetable for edit:", error);
+        actualTimetable = {};
+      }
+    }
+    
+    // Migrate old time-based data to new lecture-based format
+    const migratedTimetable = migrateTimetableData(actualTimetable);
+    setEditingTimetable(migratedTimetable);
+    
     const initialFormData = {};
     schoolDays.forEach((day) => {
-      timeSlots.forEach((time) => {
-        const slot = timetable[day]?.find((s) => s.time === time) || {
+      lectureSlots.forEach((lecture) => {
+        const slot = migratedTimetable[day]?.find((s) => s.time === lecture) || {
           subject: "",
           teacher: "",
           room: "",
         };
-        initialFormData[`${day}-${time}`] = {
+        initialFormData[`${day}-${lecture}`] = {
           subject: slot.subject || "",
           teacher: slot.teacher || "",
           room: slot.room || "",
@@ -164,6 +269,18 @@ export default function AdminTimetable() {
     });
   };
 
+  // Handle lecture selection change for create modal
+  const handleLectureSelectionChange = (lecture) => {
+    setCreateFormData((prev) => {
+      const newSelectedLectures = prev.selectedLectures.includes(lecture)
+        ? prev.selectedLectures.filter((l) => l !== lecture)
+        : [...prev.selectedLectures, lecture].sort(
+            (a, b) => lectureSlots.indexOf(a) - lectureSlots.indexOf(b)
+          );
+      return { ...prev, selectedLectures: newSelectedLectures };
+    });
+  };
+
   // Handle form submission for updating timetable
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -172,12 +289,12 @@ export default function AdminTimetable() {
       (cls) => cls.classId === editingClass
     ).schoolDays;
     schoolDays.forEach((day) => {
-      updatedTimetable[day] = timeSlots
-        .map((time) => ({
-          time,
-          subject: formData[`${day}-${time}`].subject,
-          teacher: formData[`${day}-${time}`].teacher,
-          room: formData[`${day}-${time}`].room,
+      updatedTimetable[day] = lectureSlots
+        .map((lecture) => ({
+          time: lecture,
+          subject: formData[`${day}-${lecture}`].subject,
+          teacher: formData[`${day}-${lecture}`].teacher,
+          room: formData[`${day}-${lecture}`].room,
         }))
         .filter((slot) => slot.subject || slot.teacher || slot.room);
     });
@@ -204,6 +321,7 @@ export default function AdminTimetable() {
           )
         );
         setEditingClass(null);
+        setEditingTimetable({});
         setFormData({});
       } else {
         console.error("Failed to update timetable:", await response.json());
@@ -218,12 +336,12 @@ export default function AdminTimetable() {
     e.preventDefault();
     const newTimetable = {};
     createFormData.schoolDays.forEach((day) => {
-      newTimetable[day] = timeSlots
-        .map((time) => ({
-          time,
-          subject: createFormData.timetable[day]?.[time]?.subject || "",
-          teacher: createFormData.timetable[day]?.[time]?.teacher || "",
-          room: createFormData.timetable[day]?.[time]?.room || "",
+      newTimetable[day] = createFormData.selectedLectures
+        .map((lecture) => ({
+          time: lecture,
+          subject: createFormData.timetable[day]?.[lecture]?.subject || "",
+          teacher: createFormData.timetable[day]?.[lecture]?.teacher || "",
+          room: createFormData.timetable[day]?.[lecture]?.room || "",
         }))
         .filter((slot) => slot.subject || slot.teacher || slot.room);
     });
@@ -265,6 +383,7 @@ export default function AdminTimetable() {
           classId: "",
           className: "",
           schoolDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+          selectedLectures: ["1st Lecture", "2nd Lecture", "3rd Lecture", "4th Lecture", "5th Lecture", "6th Lecture"],
           timetable: {},
         });
       } else {
@@ -454,46 +573,50 @@ export default function AdminTimetable() {
                 Timetable for Class {viewClass.classId}
               </h3>
               <div className="overflow-x-auto">
-                <table className="w-full table-auto border-collapse">
-                  <thead className="sticky top-0 z-10">
-                    <tr className="bg-indigo-100">
-                      <th className="p-4 text-left text-indigo-700 font-semibold sticky left-0 bg-indigo-100">Time</th>
-                      {viewClass.timetable &&
-                        Object.keys(viewClass.timetable).map((day) => (
-                          <th
-                            key={day}
-                            className={`p-4 text-center text-indigo-700 font-semibold ${day === currentDay ? "bg-indigo-200" : ""}`}
-                          >
-                            {day}
-                          </th>
-                        ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {timeSlots.map((time, index) => (
-                      <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-indigo-50"}>
-                        <td className="p-4 text-gray-700 font-medium sticky left-0 bg-white">
-                          {time}
-                        </td>
+                <div className="min-w-max">
+                  <table className="w-full border-collapse">
+                    <thead className="sticky top-0 z-10">
+                      <tr className="bg-indigo-100">
+                        <th className="p-4 text-left text-indigo-700 font-semibold sticky left-0 bg-indigo-100 w-48 min-w-48 border-r border-indigo-200">Time</th>
                         {viewClass.timetable &&
-                          Object.keys(viewClass.timetable).map((day) => {
-                            const slot = viewClass.timetable[day].find((slot) => slot.time === time);
-                            return (
-                              <td
-                                key={`${day}-${time}`}
-                                className={`p-4 text-center align-top ${day === currentDay ? "bg-indigo-50" : "bg-white"}`}
-                              >
+                          Object.keys(viewClass.timetable).map((day) => (
+                            <th
+                              key={day}
+                              className={`p-4 text-center text-indigo-700 font-semibold w-48 min-w-48 border-r border-indigo-200 ${day === currentDay ? "bg-indigo-200" : ""}`}
+                            >
+                              {day}
+                            </th>
+                          ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getDisplayLectures(viewClass.timetable).map((lecture, index) => (
+                        <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-indigo-50"}>
+                          <td className="p-4 text-gray-700 font-medium sticky left-0 bg-white w-48 min-w-48 border-r border-gray-200">
+                            {lecture}
+                          </td>
+                          {viewClass.timetable &&
+                            Object.keys(viewClass.timetable).map((day) => {
+                              const slot = viewClass.timetable[day].find((slot) => slot.time === lecture);
+                              return (
+                                <td
+                                  key={`${day}-${lecture}`}
+                                  className={`p-4 align-top w-48 min-w-48 border-r border-gray-200 ${day === currentDay ? "bg-indigo-50" : "bg-white"}`}
+                                >
                                 {slot ? (
-                                  <div className="space-y-1">
-                                    <span className="flex items-center gap-1 text-gray-800 font-medium">
-                                      <FaBook className="text-indigo-400" /> {slot.subject}
-                                    </span>
-                                    <span className="flex items-center gap-1 text-sm text-gray-500">
-                                      <FaChalkboardTeacher className="text-indigo-300" /> {slot.teacher}
-                                    </span>
-                                    <span className="flex items-center gap-1 text-sm text-gray-500">
-                                      <FaDoorOpen className="text-indigo-300" /> {slot.room}
-                                    </span>
+                                  <div className="space-y-2 text-left">
+                                    <div className="flex items-center justify-start gap-1 text-gray-800 font-medium">
+                                      <FaBook className="text-indigo-400 flex-shrink-0" /> 
+                                      <span className="truncate">{slot.subject}</span>
+                                    </div>
+                                    <div className="flex items-center justify-start gap-1 text-sm text-gray-500">
+                                      <FaChalkboardTeacher className="text-indigo-300 flex-shrink-0" /> 
+                                      <span className="truncate">{slot.teacher}</span>
+                                    </div>
+                                    <div className="flex items-center justify-start gap-1 text-sm text-gray-500">
+                                      <FaDoorOpen className="text-indigo-300 flex-shrink-0" /> 
+                                      <span className="truncate">{slot.room}</span>
+                                    </div>
                                   </div>
                                 ) : (
                                   <span className="text-gray-400">Free</span>
@@ -501,10 +624,11 @@ export default function AdminTimetable() {
                               </td>
                             );
                           })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
               <div className="flex justify-end mt-4">
                 <button
@@ -533,14 +657,14 @@ export default function AdminTimetable() {
                       <h4 className="text-lg font-medium text-gray-800 mb-3">
                         {day}
                       </h4>
-                      {timeSlots.map((time) => (
+                      {getDisplayLectures(editingTimetable).map((lecture) => (
                         <div
-                          key={`${day}-${time}`}
+                          key={`${day}-${lecture}`}
                           className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3"
                         >
                           <div>
                             <label className="block text-gray-600 text-sm">
-                              {time}
+                              {lecture}
                             </label>
                           </div>
                           <div>
@@ -549,11 +673,11 @@ export default function AdminTimetable() {
                             </label>
                             <input
                               type="text"
-                              value={formData[`${day}-${time}`]?.subject || ""}
+                              value={formData[`${day}-${lecture}`]?.subject || ""}
                               onChange={(e) =>
                                 handleInputChange(
                                   day,
-                                  time,
+                                  lecture,
                                   "subject",
                                   e.target.value
                                 )
@@ -567,11 +691,11 @@ export default function AdminTimetable() {
                             </label>
                             <input
                               type="text"
-                              value={formData[`${day}-${time}`]?.teacher || ""}
+                              value={formData[`${day}-${lecture}`]?.teacher || ""}
                               onChange={(e) =>
                                 handleInputChange(
                                   day,
-                                  time,
+                                  lecture,
                                   "teacher",
                                   e.target.value
                                 )
@@ -585,11 +709,11 @@ export default function AdminTimetable() {
                             </label>
                             <input
                               type="text"
-                              value={formData[`${day}-${time}`]?.room || ""}
+                              value={formData[`${day}-${lecture}`]?.room || ""}
                               onChange={(e) =>
                                 handleInputChange(
                                   day,
-                                  time,
+                                  lecture,
                                   "room",
                                   e.target.value
                                 )
@@ -604,7 +728,10 @@ export default function AdminTimetable() {
                 <div className="flex justify-end space-x-2">
                   <button
                     type="button"
-                    onClick={() => setEditingClass(null)}
+                    onClick={() => {
+                      setEditingClass(null);
+                      setEditingTimetable({});
+                    }}
                     className="px-4 py-2 text-gray-600 hover:text-gray-800"
                   >
                     Cancel
@@ -644,6 +771,7 @@ export default function AdminTimetable() {
                     }
                     className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     required
+                    placeholder="e.g. 12A"
                   />
                 </div>
                 <div>
@@ -681,19 +809,37 @@ export default function AdminTimetable() {
                     ))}
                   </div>
                 </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-2">
+                    Number of Lectures
+                  </label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {lectureSlots.map((lecture) => (
+                      <label key={lecture} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={createFormData.selectedLectures.includes(lecture)}
+                          onChange={() => handleLectureSelectionChange(lecture)}
+                          className="mr-2"
+                        />
+                        <span className="text-sm">{lecture}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 {createFormData.schoolDays.map((day) => (
                   <div key={day} className="border-b pb-4">
                     <h4 className="text-lg font-medium text-gray-800 mb-3">
                       {day}
                     </h4>
-                    {timeSlots.map((time) => (
+                    {createFormData.selectedLectures.map((lecture) => (
                       <div
-                        key={`${day}-${time}`}
+                        key={`${day}-${lecture}`}
                         className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3"
                       >
                         <div>
                           <label className="block text-gray-600 text-sm">
-                            {time}
+                            {lecture}
                           </label>
                         </div>
                         <div>
@@ -703,13 +849,13 @@ export default function AdminTimetable() {
                           <input
                             type="text"
                             value={
-                              createFormData.timetable[day]?.[time]?.subject ||
+                              createFormData.timetable[day]?.[lecture]?.subject ||
                               ""
                             }
                             onChange={(e) =>
                               handleCreateInputChange(
                                 day,
-                                time,
+                                lecture,
                                 "subject",
                                 e.target.value
                               )
@@ -724,13 +870,13 @@ export default function AdminTimetable() {
                           <input
                             type="text"
                             value={
-                              createFormData.timetable[day]?.[time]?.teacher ||
+                              createFormData.timetable[day]?.[lecture]?.teacher ||
                               ""
                             }
                             onChange={(e) =>
                               handleCreateInputChange(
                                 day,
-                                time,
+                                lecture,
                                 "teacher",
                                 e.target.value
                               )
@@ -745,12 +891,12 @@ export default function AdminTimetable() {
                           <input
                             type="text"
                             value={
-                              createFormData.timetable[day]?.[time]?.room || ""
+                              createFormData.timetable[day]?.[lecture]?.room || ""
                             }
                             onChange={(e) =>
                               handleCreateInputChange(
                                 day,
-                                time,
+                                lecture,
                                 "room",
                                 e.target.value
                               )

@@ -2,12 +2,29 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { Menu, X, GraduationCap } from 'lucide-react';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
+
+  const handleNavigation = (href) => {
+    if (pathname !== href) {
+      setIsLoading(true);
+      setMenuOpen(false); // Close mobile menu
+      router.push(href);
+    }
+  };
+
+  // Reset loading state when pathname changes (page loaded)
+  useEffect(() => {
+    setIsLoading(false);
+  }, [pathname]);
 
   // Close mobile menu on resize
   useEffect(() => {
@@ -43,13 +60,13 @@ export default function Navbar() {
                 { href: "/student/time-table", label: "Time Table" },
                 { href: "/student/result", label: "Result" },
             ].map((item) => (
-              <Link
+              <button
                 key={item.href}
-                href={item.href}
+                onClick={() => handleNavigation(item.href)}
                 className="px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm"
               >
                 {item.label}
-              </Link>
+              </button>
             ))}
           </div>
 
@@ -77,18 +94,49 @@ export default function Navbar() {
                 { href: "/student/time-table", label: "Time Table" },
                 { href: "/student/result", label: "Result" },
             ].map((item) => (
-              <Link
+              <button
                 key={item.href}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                className="block px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-all duration-200"
+                onClick={() => handleNavigation(item.href)}
+                className="block w-full text-left px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-all duration-200"
               >
                 {item.label}
-              </Link>
+              </button>
             ))}
           </div>
         )}
       </div>
+      
+      {/* Loading Progress Bar */}
+      {isLoading && (
+        <div className="fixed top-16 left-0 right-0 z-40">
+          <div className="h-1 bg-gray-200/50">
+            <div 
+              className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-in-out"
+              style={{
+                width: '0%',
+                animation: 'loadingBar 2s ease-in-out infinite'
+              }}
+            ></div>
+          </div>
+        </div>
+      )}
+      
+      <style jsx global>{`
+        @keyframes loadingBar {
+          0% { 
+            width: 0%; 
+            margin-left: 0%; 
+          }
+          50% { 
+            width: 75%; 
+            margin-left: 25%; 
+          }
+          100% { 
+            width: 0%; 
+            margin-left: 100%; 
+          }
+        }
+      `}</style>
     </nav>
   );
 }

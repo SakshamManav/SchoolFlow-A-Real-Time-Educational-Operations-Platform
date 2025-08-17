@@ -9,11 +9,87 @@ export default function Timetable() {
   const [error, setError] = useState('');
   const [classInfo, setClassInfo] = useState({ class_id: '', class_name: '' });
   const [schoolDays, setSchoolDays] = useState([]);
-  const [timeSlots, setTimeSlots] = useState([]);
+  const [displayLectures, setDisplayLectures] = useState([]);
+
+  // Helper function for ordinal numbers
+  function getOrdinal(n) {
+    if (n === 1) return 'st';
+    if (n === 2) return 'nd';
+    if (n === 3) return 'rd';
+    return 'th';
+  }
+
+  // Migration function to convert old time-based data to new lecture-based format
+  const migrateTimetableData = (timetable) => {
+    if (!timetable) return {};
+    
+    const oldTimeSlots = [
+      "09:00 AM - 10:00 AM",
+      "10:15 AM - 11:15 AM", 
+      "11:30 AM - 12:30 PM",
+      "01:30 PM - 02:30 PM",
+    ];
+    
+    const migratedTimetable = {};
+    
+    Object.keys(timetable).forEach(day => {
+      migratedTimetable[day] = [];
+      
+      timetable[day].forEach(slot => {
+        // Check if this is old format (time-based) and convert to new format
+        const oldTimeIndex = oldTimeSlots.indexOf(slot.time);
+        if (oldTimeIndex !== -1) {
+          // Convert old time slot to lecture format
+          const lectureNumber = oldTimeIndex + 1;
+          const lectureName = `${lectureNumber}${getOrdinal(lectureNumber)} Lecture`;
+          migratedTimetable[day].push({
+            ...slot,
+            time: lectureName
+          });
+        } else {
+          // Already in new format or keep as is
+          migratedTimetable[day].push(slot);
+        }
+      });
+    });
+    
+    return migratedTimetable;
+  };
+
+  // Function to get all lectures that should be displayed (both filled and intentionally empty)
+  const getDisplayLecturesFromTimetable = (timetable) => {
+    if (!timetable) return [];
+    
+    const allLecturesInData = new Set();
+    const maxLectureNumber = { value: 0 };
+    
+    // Find all lectures mentioned in the data and the highest lecture number
+    Object.keys(timetable).forEach(day => {
+      timetable[day].forEach(slot => {
+        allLecturesInData.add(slot.time);
+        // Extract lecture number to find the maximum
+        const match = slot.time.match(/(\d+)/);
+        if (match) {
+          const lectureNum = parseInt(match[1]);
+          maxLectureNumber.value = Math.max(maxLectureNumber.value, lectureNum);
+        }
+      });
+    });
+    
+    // Create a complete list from 1st lecture to the highest found lecture
+    const lectures = [];
+    for (let i = 1; i <= maxLectureNumber.value; i++) {
+      const lectureName = `${i}${getOrdinal(i)} Lecture`;
+      lectures.push(lectureName);
+    }
+    
+    return lectures;
+  };
 
   // Determine the current day for highlighting
   const [currentDay, setCurrentDay] = useState('');
   
+  // Set current day on client side only to avoid hydration mismatch
   useEffect(() => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const today = new Date().getDay();
@@ -46,15 +122,14 @@ export default function Timetable() {
         const { classId, className, schoolDays, timetable } = data.data;
         setClassInfo({ class_id: classId, class_name: className });
         setSchoolDays(schoolDays);
-        setTimetable(timetable);
         
-        // Extract unique time slots from timetable
-        const allTimeSlots = Object.values(timetable)
-          .flat()
-          .map(slot => slot.time)
-          .filter((time, index, array) => array.indexOf(time) === index)
-          .sort();
-        setTimeSlots(allTimeSlots);
+        // Migrate old time-based data to new lecture-based format
+        const migratedTimetable = migrateTimetableData(timetable);
+        setTimetable(migratedTimetable);
+        
+        // Get display lectures from migrated data
+        const lectures = getDisplayLecturesFromTimetable(migratedTimetable);
+        setDisplayLectures(lectures);
       } else {
         setError(data.error || 'Failed to fetch timetable');
       }
@@ -123,40 +198,41 @@ export default function Timetable() {
 
           {!loading && !error && Object.keys(timetable).length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full table-auto border-collapse">
-                <thead>
-                  <tr className="bg-indigo-100">
-                    <th className="p-4 text-left text-indigo-700 font-semibold">Time</th>
-                    {schoolDays.map((day) => (
-                      <th
-                        key={day}
-                        className={`p-4 text-center text-indigo-700 font-semibold ${
-                          day === currentDay ? 'bg-indigo-200' : ''
-                        }`}
-                      >
-                        {day}
-                        {day === currentDay && (
-                          <span className="block text-xs text-indigo-600 font-normal">Today</span>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {timeSlots.map((time, index) => (
-                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="p-4 text-gray-700 font-medium bg-gray-50">{time}</td>
-                      {schoolDays.map((day) => {
-                        const slot = timetable[day]?.find((slot) => slot.time === time);
+              <div className="min-w-max">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-indigo-100">
+                      <th className="p-4 text-left text-indigo-700 font-semibold w-48 min-w-48 border-r border-indigo-200">Lecture</th>
+                      {schoolDays.map((day) => (
+                        <th
+                          key={day}
+                          className={`p-4 text-center text-indigo-700 font-semibold w-48 min-w-48 border-r border-indigo-200 ${
+                            day === currentDay ? 'bg-indigo-200' : ''
+                          }`}
+                        >
+                          {day}
+                          {day === currentDay && (
+                            <span className="block text-xs text-indigo-600 font-normal">Today</span>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayLectures.map((lecture, index) => (
+                      <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-indigo-50"}>
+                        <td className="p-4 text-gray-700 font-medium w-48 min-w-48 border-r border-gray-200 bg-gray-50">{lecture}</td>
+                        {schoolDays.map((day) => {
+                          const slot = timetable[day]?.find((slot) => slot.time === lecture);
                         return (
                           <td
-                            key={`${day}-${time}`}
-                            className={`p-4 text-center ${
+                            key={`${day}-${lecture}`}
+                            className={`p-4 align-top w-48 min-w-48 border-r border-gray-200 ${
                               day === currentDay ? 'bg-indigo-50' : 'bg-white'
                             }`}
                           >
                             {slot ? (
-                              <div className="space-y-1">
+                              <div className="space-y-2 text-left">
                                 <p className="text-gray-800 font-medium text-sm">
                                   {slot.subject}
                                 </p>
@@ -175,8 +251,9 @@ export default function Timetable() {
                       })}
                     </tr>
                   ))}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
