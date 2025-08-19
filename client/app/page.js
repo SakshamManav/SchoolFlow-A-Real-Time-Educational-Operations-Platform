@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react';
 import { DollarSign, Shield, Download, Star, Users, TrendingUp, CheckCircle, ArrowRight, Sparkles, Globe, Award } from 'lucide-react';
-import Navbar from './admin/components/Navbar';
+import HomeNavbar from './components/HomeNavbar';
 
 const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -110,7 +110,7 @@ export default function Home() {
 
   return (
     <>
-    <Navbar/>
+    <HomeNavbar/>
     <main className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 text-gray-100 overflow-hidden">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -120,7 +120,7 @@ export default function Home() {
       </div>
 
       {/* Hero Section */}
-      <section className="relative w-full py-32 px-6 md:px-20 bg-gradient-to-r from-slate-900 via-gray-800 to-slate-700 text-white text-center overflow-hidden">
+      <section className="relative w-full pt-48 pb-32 px-6 md:px-20 bg-gradient-to-r from-slate-900 via-gray-800 to-slate-700 text-white text-center overflow-hidden">
         {/* Hero Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -156,10 +156,17 @@ export default function Home() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <a
-              href="/students"
+              href="/student/dashboard"
               className="group bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold px-10 py-4 rounded-full text-lg shadow-2xl hover:shadow-cyan-500/50 hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex items-center gap-3"
             >
-              Get Started Free
+              Student Portal
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+            </a>
+            <a
+              href="/teacher/dashboard"
+              className="group bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold px-10 py-4 rounded-full text-lg shadow-2xl hover:shadow-purple-500/50 hover:from-purple-400 hover:to-indigo-500 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex items-center gap-3"
+            >
+              Teacher Portal
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
             </a>
             <button className="group border-2 border-gray-600/50 text-gray-200 font-semibold px-8 py-4 rounded-full text-lg backdrop-blur-sm hover:bg-gray-800/30 hover:border-cyan-400/50 transition-all duration-300 flex items-center gap-3">
@@ -281,10 +288,16 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="/students"
+              href="/student/dashboard"
               className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold px-10 py-4 rounded-full text-lg shadow-2xl hover:shadow-cyan-500/50 hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 transform hover:-translate-y-1"
             >
-              Start Free Trial
+              Student Portal
+            </a>
+            <a
+              href="/teacher/dashboard"
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold px-10 py-4 rounded-full text-lg shadow-2xl hover:shadow-purple-500/50 hover:from-purple-400 hover:to-indigo-500 transition-all duration-300 transform hover:-translate-y-1"
+            >
+              Teacher Portal
             </a>
             <button className="border-2 border-gray-600/50 text-gray-200 font-semibold px-8 py-4 rounded-full text-lg backdrop-blur-sm hover:bg-gray-800/30 hover:border-cyan-400/50 transition-all duration-300">
               Schedule Demo

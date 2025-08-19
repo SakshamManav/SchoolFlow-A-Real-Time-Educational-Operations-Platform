@@ -12,10 +12,19 @@ const TeachersPage = () => {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
+  const [token, setToken] = useState('');
+  const [user, setUser] = useState('');
 
-  // Get token from localStorage (set by admin authentication)
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
-  const user = typeof window !== 'undefined' ? localStorage.getItem('user') || '' : '';
+  // Handle client-side mounting to avoid hydration issues
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      setToken(localStorage.getItem('token') || '');
+      setUser(localStorage.getItem('user') || '');
+    }
+  }, []);
+
   const subjects = [
     'Mathematics', 'English', 'Science', 'History', 'Geography',
     'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Physical Education'
@@ -28,16 +37,14 @@ const TeachersPage = () => {
 
   // Fetch teachers
   useEffect(() => {
-    if (token) {
+    if (mounted && token) {
       setLoading(true);
       fetchTeachers();
-      console.log(localStorage.getItem("user"))
-      console.log(user)
-    } else {
+    } else if (mounted && !token) {
       setError('No authentication token found. Please log in as admin.');
       setLoading(false);
     }
-  }, [token]);
+  }, [token, mounted]);
 
   const fetchTeachers = async () => {
     try {
@@ -53,7 +60,7 @@ const TeachersPage = () => {
         throw new Error(errorData.error || 'Failed to fetch teachers');
       }
       const data = await response.json();
-      setTeachers(data);
+      setTeachers(data.data || []); // Extract the data array from the response
     } catch (err) {
       setError('Failed to fetch teachers: ' + err.message);
     } finally {
@@ -81,7 +88,7 @@ const TeachersPage = () => {
         throw new Error(errorData.error || 'Failed to fetch teacher details');
       }
       const data = await response.json();
-      setSelectedTeacher(data);
+      setSelectedTeacher(data.data); // Extract the teacher data from the response
       setFormData(null);
       setIsEditMode(false);
       setShowModal(true);
@@ -127,7 +134,7 @@ const TeachersPage = () => {
   // Handle create teacher
   const handleCreate = () => {
     setFormData({
-      name: '', email: '', password: '', phone: '', gender: '', dob: '', address: '',
+      teacher_id: '', name: '', email: '', password: '', phone: '', gender: '', dob: '', address: '',
       qualification: '', experience_years: '', subject_specialty: '', class_assigned: '',
       profile_pic_url: '', joining_date: '', salary: '', role: 'teacher'
     });
@@ -140,6 +147,7 @@ const TeachersPage = () => {
   // Handle edit teacher
   const handleEdit = (teacher) => {
     setFormData({
+      teacher_id: teacher.teacher_id || '',
       name: teacher.name,
       email: teacher.email,
       phone: teacher.phone || '',
@@ -223,8 +231,8 @@ const TeachersPage = () => {
 
   // Filter teachers
   const filteredTeachers = selectedSubject
-    ? teachers.filter(teacher => teacher.subject_specialty === selectedSubject)
-    : teachers;
+    ? (teachers || []).filter(teacher => teacher.subject_specialty === selectedSubject)
+    : (teachers || []);
 
   const getGenderIcon = (gender) => {
     return gender === 'male' ? '👨‍🏫' : gender === 'female' ? '👩‍🏫' : '🧑‍🏫';
@@ -232,10 +240,22 @@ const TeachersPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
-      <div className="max-w-7xl mx-auto">
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+      {!mounted ? (
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto">
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+          {/* Header */}
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Users className="w-8 h-8 text-purple-600" />
@@ -288,7 +308,8 @@ const TeachersPage = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">AG ID</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Teacher ID</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
@@ -300,7 +321,8 @@ const TeachersPage = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredTeachers.map((teacher, idx) => (
                     <tr key={teacher.id} className={idx % 2 === 0 ? "bg-white hover:bg-purple-50 transition-colors" : "bg-purple-50 hover:bg-purple-100 transition-colors"}>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.id}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">AG{teacher.id}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{teacher.teacher_id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{getGenderIcon(teacher.gender)}</span>
@@ -377,6 +399,18 @@ const TeachersPage = () => {
                             value={formData.name}
                             onChange={handleFormChange}
                             className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-700">Teacher ID</label>
+                          <input
+                            type="text"
+                            name="teacher_id"
+                            value={formData.teacher_id}
+                            onChange={handleFormChange}
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                            placeholder="e.g., T001, TCH001, etc."
                             required
                           />
                         </div>
@@ -595,12 +629,20 @@ const TeachersPage = () => {
                       <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Basic Information</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
+                          <label className="text-sm font-medium text-gray-500">AG ID</label>
+                          <p className="text-lg font-semibold text-gray-900">AG{selectedTeacher.id}</p>
+                        </div>
+                        <div>
                           <label className="text-sm font-medium text-gray-500">Teacher ID</label>
-                          <p className="text-lg font-semibold text-gray-900">{selectedTeacher.id}</p>
+                          <p className="text-lg font-semibold text-gray-900">{selectedTeacher.teacher_id}</p>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-500">Name</label>
                           <p className="text-lg font-semibold text-gray-900">{selectedTeacher.name}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Username</label>
+                          <p className="text-lg font-semibold text-gray-900">{selectedTeacher.username || '-'}</p>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-500">Subject</label>
@@ -738,7 +780,8 @@ const TeachersPage = () => {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

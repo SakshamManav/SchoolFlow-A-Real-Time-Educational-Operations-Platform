@@ -100,6 +100,7 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
             {[
+              { href: "/admin/dashboard", label: "Dashboard" },
               { href: "/admin/students", label: "Students" },
               { href: "/admin/fees", label: "Fees" },
               { href: "/admin/teachers", label: "Teachers" },
@@ -210,6 +211,7 @@ export default function Navbar() {
           <div className="md:hidden border-t border-white/20 py-4 animate-in slide-in-from-top-2 duration-200">
             <div className="space-y-2">
               {[
+                { href: "/admin/dashboard", label: "Dashboard" },
                 { href: "/admin/students", label: "Students" },
                 { href: "/admin/fees", label: "Fees" },
                 { href: "/admin/teachers", label: "Teachers" },

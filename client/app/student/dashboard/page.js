@@ -3,32 +3,28 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import {
   CalendarDays,
-  Bell,
-  Clock,
   BarChart2,
-  ClipboardList,
-  Calendar,
+  Clock,
+  RefreshCw,
   LogOut,
+  User,
+  Calendar,
 } from "lucide-react";
 
 function StudentDashboard() {
   const [studentData, setStudentData] = useState(null);
+  const [todayTimetable, setTodayTimetable] = useState([]);
+  const [attendanceStats, setAttendanceStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(false);
   const router = useRouter();
   const today = new Date();
 
-  console.log('Dashboard component mounted'); // Debug log
-
   useEffect(() => {
-    console.log('useEffect running'); // Debug log
     const studentToken = localStorage.getItem('student_token');
     const studentDataStr = localStorage.getItem('student_user');
     
-    console.log('Token:', studentToken); // Debug log
-    console.log('Student data:', studentDataStr); // Debug log
-    
     if (!studentToken) {
-      console.log('No token found, redirecting to login'); // Debug log
       alert('Session expired or not logged in. Please login again.');
       router.push('/student/login');
       setLoading(false);
@@ -38,8 +34,8 @@ function StudentDashboard() {
     if (studentDataStr) {
       try {
         const parsedData = JSON.parse(studentDataStr);
-        console.log('Parsed student data:', parsedData); // Debug log
         setStudentData(parsedData);
+        fetchDashboardData(parsedData.id, studentToken);
       } catch (error) {
         console.error('Error parsing student data:', error);
         localStorage.removeItem('student_user');
@@ -48,13 +44,87 @@ function StudentDashboard() {
         return;
       }
     } else {
-      console.log('No student data found, redirecting to login'); // Debug log
       alert('Student data not found. Please login again.');
       router.push('/student/login');
       return;
     }
     setLoading(false);
   }, [router]);
+
+  const fetchDashboardData = async (studentId, token) => {
+    setLoadingData(true);
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+
+    try {
+      // Fetch today's timetable - use full timetable API and filter for today
+      console.log('Fetching full timetable to get today\'s schedule...');
+      const timetableResponse = await fetch('http://localhost:5001/student/timetable/my-timetable', {
+        headers
+      });
+      
+      if (timetableResponse.ok) {
+        const timetableData = await timetableResponse.json();
+        console.log('Full timetable response:', timetableData);
+        
+        if (timetableData.success && timetableData.data && timetableData.data.timetable) {
+          // Get today's day name
+          const today = new Date();
+          const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const currentDay = daysOfWeek[today.getDay()];
+          console.log('Current day:', currentDay);
+          
+          // Get today's schedule from the full timetable
+          const todaySchedule = timetableData.data.timetable[currentDay] || [];
+          console.log('Today\'s schedule:', todaySchedule);
+          setTodayTimetable(todaySchedule);
+        } else {
+          console.log('No timetable data available');
+          setTodayTimetable([]);
+        }
+      } else {
+        console.error('Timetable API error:', timetableResponse.status, await timetableResponse.text());
+        setTodayTimetable([]);
+      }
+
+      // Fetch attendance stats - use the correct endpoint from working attendance page
+      console.log('Fetching attendance stats for student ID:', studentId);
+      const attendanceResponse = await fetch(`http://localhost:5001/student/profile/attendance-stats/${studentId}`, {
+        headers
+      });
+      
+      if (attendanceResponse.ok) {
+        const attendanceData = await attendanceResponse.json();
+        console.log('Attendance response:', attendanceData);
+        
+        if (attendanceData.success && attendanceData.data) {
+          setAttendanceStats(attendanceData.data);
+          console.log('Attendance stats set:', attendanceData.data);
+        } else {
+          console.log('No attendance data available');
+          setAttendanceStats(null);
+        }
+      } else {
+        console.error('Attendance API error:', attendanceResponse.status, await attendanceResponse.text());
+        setAttendanceStats(null);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setTodayTimetable([]);
+      setAttendanceStats(null);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const refreshData = () => {
+    if (studentData) {
+      const token = localStorage.getItem('student_token');
+      fetchDashboardData(studentData.id, token);
+    }
+  };
   
   // Loading state
   if (loading) {
@@ -91,44 +161,16 @@ function StudentDashboard() {
     );
   }
 
-  // Default data for demonstration
-  const timetable = [
-    { time: "09:00 - 09:45", subject: "Mathematics", room: "A101" },
-    { time: "10:00 - 10:45", subject: "English", room: "B204" },
-    { time: "11:00 - 11:45", subject: "Physics", room: "C307" },
-  ];
-
-  const announcements = [
-    { title: "Sports Day on Aug 25", excerpt: "All students must assemble at 7:30 AM." },
-    { title: "Library Timings", excerpt: "Library will remain open till 6 PM on weekdays." },
-  ];
-
-  const stats = { 
-    attendance: 92, 
-    nextFeeDate: "2025-08-20", 
-    pendingFees: "₹0" 
-  };
-
-  const deadlines = [
-    { title: "Math Assignment: Integrals", due: "2025-08-12" },
-    { title: "Physics Lab Report", due: "2025-08-15" },
-  ];
-
   const friendlyDate = (d) => new Date(d).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 
   // Logout function
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
-      // Clear all student data from localStorage
       localStorage.removeItem('student_token');
       localStorage.removeItem('student_user');
-      
-      // Redirect to login page
       router.push('/student/login');
     }
   };
-
-  console.log('Rendering dashboard - Loading:', loading, 'Student Data:', studentData); // Debug log
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -137,13 +179,17 @@ function StudentDashboard() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-semibold text-slate-800">Welcome back, <span className="text-indigo-600">{studentData.name}</span>!</h1>
-            <p className="text-sm text-slate-500 mt-1">{friendlyDate(today)} • Good to see you — here's what's happening today.</p>
+            <p className="text-sm text-slate-500 mt-1">{friendlyDate(today)} • Here's your dashboard</p>
           </div>
 
           <div className="text-black flex items-center gap-4">
-            <button className=" hidden md:inline-flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm text-sm hover:shadow-md">
-              <Bell className="w-4 h-4" />
-              Notifications
+            <button 
+              onClick={refreshData}
+              disabled={loadingData}
+              className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm text-sm hover:shadow-md disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingData ? 'animate-spin' : ''}`} />
+              Refresh
             </button>
             <button 
               onClick={handleLogout}
@@ -154,7 +200,7 @@ function StudentDashboard() {
               <span className="hidden sm:inline">Logout</span>
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-semibold">{studentData.name.charAt(0)}</div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-sky-500 flex items-center justify-center text-white font-semibold">{studentData.name.charAt(0)}</div>
               <div className="text-sm text-slate-600">
                 <div className="font-medium">{studentData.name}</div>
                 <div className="text-xs">Class {studentData.class || 'N/A'} - Section {studentData.section || 'N/A'}</div>
@@ -176,107 +222,82 @@ function StudentDashboard() {
                   </div>
                   <div>
                     <h3 className="text-lg font-medium text-slate-800">Today's Timetable</h3>
-                    <p className="text-sm text-slate-500">{friendlyDate(today)}</p>
+                    <p className="text-sm text-slate-500">{friendlyDate(today)} • {today.toLocaleDateString('en-US', { weekday: 'long' })}</p>
                   </div>
                 </div>
-                <div className="text-xs text-slate-500">{timetable.length} classes</div>
+                <div className="text-xs text-slate-500">{todayTimetable.length} classes</div>
               </div>
 
-              <div className="divide-y">
-                {timetable.map((item, idx) => (
-                  <div key={idx} className="py-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium text-slate-700">{item.subject}</div>
-                      <div className="text-xs text-slate-500">{item.room}</div>
+              {loadingData ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              ) : todayTimetable.length > 0 ? (
+                <div className="divide-y">
+                  {todayTimetable.map((item, idx) => (
+                    <div key={idx} className="py-3 flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium text-slate-700">{item.subject || 'Subject'}</div>
+                        <div className="text-xs text-slate-500">{item.room || 'Room'} • {item.teacher || 'Teacher'}</div>
+                      </div>
+                      <div className="text-sm text-slate-600">{item.time || 'Time'}</div>
                     </div>
-                    <div className="text-sm text-slate-600">{item.time}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Announcements */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-amber-50 p-2 rounded-lg">
-                    <Bell className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-slate-800">Recent Announcements</h3>
-                    <p className="text-sm text-slate-500">Latest notices from school</p>
-                  </div>
+                  ))}
                 </div>
-                <button className="text-sm text-indigo-600">View All</button>
-              </div>
-
-              <div className="space-y-3">
-                {announcements.map((a, i) => (
-                  <div key={i} className="p-3 border rounded-lg bg-gradient-to-br from-white to-slate-50">
-                    <div className="text-sm font-medium text-slate-800">{a.title}</div>
-                    <div className="text-xs text-slate-600 mt-1">{a.excerpt}</div>
-                  </div>
-                ))}
-              </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>No classes scheduled for today ({today.toLocaleDateString('en-US', { weekday: 'long' })})</p>
+                  <p className="text-xs mt-1">Check if timetable is available for your class</p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Right column (Sidebar widgets) */}
           <div className="space-y-6">
-            {/* Stats Summary */}
+            {/* Attendance Stats */}
             <div className="bg-white rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-violet-50 p-2 rounded-lg">
                   <BarChart2 className="w-5 h-5 text-violet-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium text-slate-800">Quick Stats</h3>
-                  <p className="text-sm text-slate-500">Your academic overview</p>
+                  <h3 className="text-lg font-medium text-slate-800">Attendance Stats</h3>
+                  <p className="text-sm text-slate-500">Your attendance overview</p>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Attendance</span>
-                  <span className="text-sm font-semibold text-green-600">{stats.attendance}%</span>
+              {loadingData ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-violet-600"></div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Next Fee Date</span>
-                  <span className="text-sm font-semibold text-slate-800">{new Date(stats.nextFeeDate).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Pending Fees</span>
-                  <span className="text-sm font-semibold text-indigo-600">{stats.pendingFees}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Upcoming Deadlines */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-emerald-50 p-2 rounded-lg">
-                    <ClipboardList className="w-5 h-5 text-emerald-600" />
+              ) : attendanceStats ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">Total Classes</span>
+                    <span className="text-sm font-semibold text-slate-800">{attendanceStats.total_records || 0}</span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-slate-800">Deadlines</h3>
-                    <p className="text-sm text-slate-500">Upcoming submissions</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">Present</span>
+                    <span className="text-sm font-semibold text-green-600">{attendanceStats.present_count || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">Absent</span>
+                    <span className="text-sm font-semibold text-red-600">{attendanceStats.absent_count || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">Attendance %</span>
+                    <span className="text-sm font-semibold text-indigo-600">{attendanceStats.attendance_percentage || '0'}%</span>
                   </div>
                 </div>
-                <div className="text-xs text-slate-500">{deadlines.length} items</div>
-              </div>
-
-              <div className="space-y-3">
-                {deadlines.map((d, i) => (
-                  <div key={i} className="p-3 border rounded-lg bg-gradient-to-br from-white to-slate-50">
-                    <div className="text-sm font-medium text-slate-800">{d.title}</div>
-                    <div className="text-xs text-slate-500 mt-2 flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5" />
-                      Due: <span className="ml-1 font-semibold">{new Date(d.due).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <BarChart2 className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No attendance data available</p>
+                  <p className="text-xs mt-1">Check if attendance records exist</p>
+                </div>
+              )}
             </div>
 
             {/* Quick Actions */}
@@ -287,7 +308,7 @@ function StudentDashboard() {
                 </div>
                 <div>
                   <h3 className="text-lg font-medium text-slate-800">Quick Actions</h3>
-                  <p className="text-sm text-slate-500">Common tasks</p>
+                  <p className="text-sm text-slate-500">Available features</p>
                 </div>
               </div>
 
