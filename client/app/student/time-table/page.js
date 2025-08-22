@@ -147,7 +147,7 @@ export default function Timetable() {
 
   return (
      <>
-      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
         <Head>
           <title>Weekly Timetable</title>
           <meta name="description" content="Student Weekly Class Schedule" />
@@ -157,7 +157,7 @@ export default function Timetable() {
         <main className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-indigo-800">Weekly Timetable</h1>
+              <h1 className="text-3xl font-bold text-green-800">Weekly Timetable</h1>
               {classInfo.class_name && (
                 <p className="text-lg text-gray-600 mt-2">
                   Class: <span className="font-semibold">{classInfo.class_name}</span> 
@@ -169,7 +169,7 @@ export default function Timetable() {
             </div>
             <button
               onClick={fetchTimetable}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               disabled={loading}
             >
               {loading ? 'Loading...' : 'Refresh'}
@@ -178,7 +178,7 @@ export default function Timetable() {
 
           {loading && (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
               <span className="ml-3 text-gray-600">Loading your timetable...</span>
             </div>
           )}
@@ -201,18 +201,18 @@ export default function Timetable() {
               <div className="min-w-max">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-indigo-100">
-                      <th className="p-4 text-left text-indigo-700 font-semibold w-48 min-w-48 border-r border-indigo-200">Lecture</th>
+                    <tr className="bg-green-100">
+                      <th className="p-4 text-left text-green-700 font-semibold w-48 min-w-48 border-r border-green-200">Lecture</th>
                       {schoolDays.map((day) => (
                         <th
                           key={day}
-                          className={`p-4 text-center text-indigo-700 font-semibold w-48 min-w-48 border-r border-indigo-200 ${
-                            day === currentDay ? 'bg-indigo-200' : ''
+                          className={`p-4 text-center text-green-700 font-semibold w-48 min-w-48 border-r border-green-200 ${
+                            day === currentDay ? 'bg-green-200' : ''
                           }`}
                         >
                           {day}
                           {day === currentDay && (
-                            <span className="block text-xs text-indigo-600 font-normal">Today</span>
+                            <span className="block text-xs text-green-600 font-normal">Today</span>
                           )}
                         </th>
                       ))}
@@ -220,7 +220,7 @@ export default function Timetable() {
                   </thead>
                   <tbody>
                     {displayLectures.map((lecture, index) => (
-                      <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-indigo-50"}>
+                      <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-green-50"}>
                         <td className="p-4 text-gray-700 font-medium w-48 min-w-48 border-r border-gray-200 bg-gray-50">{lecture}</td>
                         {schoolDays.map((day) => {
                           const slot = timetable[day]?.find((slot) => slot.time === lecture);
@@ -228,7 +228,7 @@ export default function Timetable() {
                           <td
                             key={`${day}-${lecture}`}
                             className={`p-4 align-top w-48 min-w-48 border-r border-gray-200 ${
-                              day === currentDay ? 'bg-indigo-50' : 'bg-white'
+                              day === currentDay ? 'bg-green-50' : 'bg-white'
                             }`}
                           >
                             {slot ? (

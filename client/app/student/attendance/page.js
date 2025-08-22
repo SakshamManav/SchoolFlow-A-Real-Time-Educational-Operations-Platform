@@ -161,20 +161,7 @@ export default function Attendance() {
           lastMonthPercentage = lastMonthData.data.attendance_percentage || 0;
         }
 
-        // Format subjects with icons and consolidate similar subjects
-        const subjectIcons = {
-          'Mathematics': '📐',
-          'Math': '📐',
-          'Maths': '📐',
-          'Physics': '⚡',
-          'Chemistry': '🧪',
-          'English': '📚',
-          'Computer Science': '💻',
-          'Biology': '🔬',
-          'History': '📜',
-          'Geography': '🌍',
-          'Science': '🔬'
-        };
+        // Format subjects and consolidate similar subjects
 
         // Function to normalize subject names
         const normalizeSubjectName = (subject) => {
@@ -235,8 +222,7 @@ export default function Attendance() {
               name: normalizedName,
               percentage: percentage,
               totalClasses: combinedTotalClasses,
-              attended: combinedAttended,
-              icon: subjectIcons[normalizedName] || '📖'
+              attended: combinedAttended
             });
           } else {
             // First occurrence of this subject
@@ -246,8 +232,7 @@ export default function Attendance() {
               name: normalizedName,
               percentage: percentage,
               totalClasses: totalClasses,
-              attended: presentCount,
-              icon: subjectIcons[normalizedName] || '📖'
+              attended: presentCount
             });
           }
         });
@@ -288,9 +273,9 @@ export default function Attendance() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading attendance data...</p>
         </div>
       </div>
@@ -299,7 +284,7 @@ export default function Attendance() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md">
           <div className="text-red-500 mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -310,7 +295,7 @@ export default function Attendance() {
           <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
             Try Again
           </button>
@@ -320,7 +305,7 @@ export default function Attendance() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
       <Head>
         <title>Attendance Tracker</title>
         <meta name="description" content="Student Attendance Tracking Page" />
@@ -328,17 +313,17 @@ export default function Attendance() {
       </Head>
 
       <main className="max-w-7xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
-        <div className="bg-gradient-to-r from-indigo-600 to-blue-500 -mx-8 -mt-8 mb-8 p-6 rounded-t-2xl">
+        <div className="bg-gradient-to-r from-green-600 to-emerald-500 -mx-8 -mt-8 mb-8 p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white">Attendance Dashboard</h1>
-              <p className="text-indigo-100 mt-2">Academic Year 2025-26</p>
+              <p className="text-green-100 mt-2">Academic Year 2025-26</p>
             </div>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
-              title="Refresh attendance data"
-            >
+              <button 
+                onClick={() => window.location.reload()} 
+                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                title="Refresh attendance data"
+              >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -359,7 +344,7 @@ export default function Attendance() {
             <p className="text-gray-500 mb-4">Your attendance data will appear here once classes begin and attendance is marked.</p>
             <button 
               onClick={() => window.location.reload()} 
-              className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
             >
               Check Again
             </button>
@@ -368,10 +353,10 @@ export default function Attendance() {
           <>
             <div className="grid grid-cols-1 gap-6 mb-8">
               {/* Overall Attendance Card */}
-              <div className="bg-white rounded-xl p-6 shadow-lg border border-indigo-50 hover:shadow-xl transition-shadow max-w-md mx-auto">
+              <div className="bg-white rounded-xl p-6 shadow-lg border border-green-50 hover:shadow-xl transition-shadow max-w-md mx-auto">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-700">Overall Attendance</h3>
-                  <span className="text-indigo-500 bg-indigo-50 p-2 rounded-full">
+                  <span className="text-green-500 bg-green-50 p-2 rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
@@ -389,7 +374,7 @@ export default function Attendance() {
                         fill="transparent"
                       ></circle>
                       <circle
-                        className="text-indigo-600 progress-ring stroke-current"
+                        className="text-green-600 progress-ring stroke-current"
                         strokeWidth="10"
                         strokeLinecap="round"
                         cx="50"
@@ -401,7 +386,7 @@ export default function Attendance() {
                       ></circle>
                     </svg>
                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                      <div className="text-3xl font-bold text-indigo-800">{attendanceData.overallPercentage}%</div>
+                      <div className="text-3xl font-bold text-green-800">{attendanceData.overallPercentage}%</div>
                       <div className="text-sm text-gray-500">{attendanceData.presentDays}/{attendanceData.totalDays} classes</div>
                     </div>
                   </div>
@@ -410,7 +395,7 @@ export default function Attendance() {
             </div>
 
             {/* Subject-wise Attendance */}
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-indigo-50 mb-8">
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-green-50 mb-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-800">Subject-wise Attendance</h2>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -436,7 +421,6 @@ export default function Attendance() {
                       <div key={index} className={`rounded-lg p-4 border-2 ${statusClasses} hover:shadow-md transition-shadow`}>
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-2">
-                            <span className="text-2xl">{subject.icon}</span>
                             <h3 className="font-semibold text-gray-800">{subject.name}</h3>
                           </div>
                           <span className="text-2xl font-bold text-gray-700">{subject.percentage}%</span>
@@ -468,9 +452,9 @@ export default function Attendance() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Recent Attendance */}
-              <div className="bg-white rounded-xl p-6 shadow-lg border border-indigo-50">
+              <div className="bg-white rounded-xl p-6 shadow-lg border border-green-50">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Recent Attendance
@@ -503,7 +487,7 @@ export default function Attendance() {
               </div>
 
               {/* Recent Absences */}
-              <div className="bg-white rounded-xl p-6 shadow-lg border border-indigo-50">
+              <div className="bg-white rounded-xl p-6 shadow-lg border border-green-50">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

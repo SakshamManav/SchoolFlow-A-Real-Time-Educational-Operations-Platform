@@ -101,11 +101,8 @@ export default function TeacherNavbar() {
               {[
                 { href: "/teacher/dashboard", label: "Dashboard" },
                 { href: "/teacher/classes", label: "My Classes" },
-                { href: "/teacher/students", label: "Students" },
                 { href: "/teacher/attendance", label: "Attendance" },
-                { href: "/teacher/assignments", label: "Assignments" },
-                { href: "/teacher/schedule", label: "Schedule" },
-                { href: "/teacher/reports", label: "Reports" }
+                { href: "/teacher/profile", label: "Profile" }
               ].map((item) => (
                 <button
                   key={item.href}
@@ -171,13 +168,6 @@ export default function TeacherNavbar() {
                       
                       <div className="py-2">
                         <button
-                          onClick={() => handleNavigation('/teacher/profile')}
-                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
-                        >
-                          <User className="w-4 h-4 text-purple-600" />
-                          View Profile
-                        </button>
-                        <button
                           onClick={() => handleNavigation('/teacher/settings')}
                           className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
                         >
@@ -229,11 +219,8 @@ export default function TeacherNavbar() {
               {[
                 { href: "/teacher/dashboard", label: "Dashboard" },
                 { href: "/teacher/classes", label: "My Classes" },
-                { href: "/teacher/students", label: "Students" },
                 { href: "/teacher/attendance", label: "Attendance" },
-                { href: "/teacher/assignments", label: "Assignments" },
-                { href: "/teacher/schedule", label: "Schedule" },
-                { href: "/teacher/reports", label: "Reports" }
+                { href: "/teacher/profile", label: "Profile" }
               ].map((item) => (
                 <button
                   key={item.href}
@@ -261,12 +248,6 @@ export default function TeacherNavbar() {
                         <p className="text-xs text-white/70">{user.email}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleNavigation('/teacher/profile')}
-                      className="block w-full text-left px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-all duration-200"
-                    >
-                      Profile
-                    </button>
                     <button
                       onClick={() => handleNavigation('/teacher/settings')}
                       className="block w-full text-left px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-all duration-200"

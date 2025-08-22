@@ -234,10 +234,6 @@ const TeachersPage = () => {
     ? (teachers || []).filter(teacher => teacher.subject_specialty === selectedSubject)
     : (teachers || []);
 
-  const getGenderIcon = (gender) => {
-    return gender === 'male' ? '👨‍🏫' : gender === 'female' ? '👩‍🏫' : '🧑‍🏫';
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
       {!mounted ? (
@@ -325,7 +321,6 @@ const TeachersPage = () => {
                       <td className="px-6 py-4 text-sm text-gray-900">{teacher.teacher_id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{getGenderIcon(teacher.gender)}</span>
                           {teacher.name}
                         </div>
                       </td>

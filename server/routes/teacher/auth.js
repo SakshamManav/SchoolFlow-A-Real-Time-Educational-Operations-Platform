@@ -67,7 +67,7 @@ router.post('/login', async (req, res) => {
                 class_assigned: teacher.class_assigned
             },
             SECRET_KEY,
-            { expiresIn: '24h' } // Token expires in 24 hours
+             // Token expires in 24 hours
         );
 
         // Update last login time

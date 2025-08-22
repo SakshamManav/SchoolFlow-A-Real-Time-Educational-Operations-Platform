@@ -16,17 +16,15 @@ export default function Navbar() {
   const handleNavigation = (href) => {
     if (pathname !== href) {
       setIsLoading(true);
-      setMenuOpen(false); // Close mobile menu
+      setMenuOpen(false); 
       router.push(href);
     }
   };
 
-  // Reset loading state when pathname changes (page loaded)
   useEffect(() => {
     setIsLoading(false);
   }, [pathname]);
 
-  // Close mobile menu on resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
@@ -39,16 +37,16 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="bg-black shadow-xl sticky top-0 z-50 backdrop-blur-md">
+    <nav className="bg-gradient-to-r from-green-900 via-emerald-900 to-green-800 shadow-xl sticky top-0 z-50 backdrop-blur-md border-b border-green-500/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/student/dashboard" className="flex items-center space-x-2 group">
-            <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl group-hover:bg-white/20 transition-all duration-300">
+            <div className="bg-white/10 backdrop-blur-md p-2 rounded-xl group-hover:bg-white/20 transition-all duration-300 shadow-lg shadow-green-500/20">
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">
-              MySchool
+              StudentPortal
             </span>
           </Link>
 
@@ -58,12 +56,14 @@ export default function Navbar() {
                 { href: "/student/profile", label: "Profile" },
                 { href: "/student/attendance", label: "Attendance" },
                 { href: "/student/time-table", label: "Time Table" },
-                { href: "/student/result", label: "Result" },
+               
             ].map((item) => (
               <button
                 key={item.href}
                 onClick={() => handleNavigation(item.href)}
-                className="px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm"
+                className={`px-4 py-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg font-medium transition-all duration-200 backdrop-blur-sm ${
+                  pathname === item.href ? 'bg-white/20 text-white shadow-lg shadow-green-500/20' : ''
+                }`}
               >
                 {item.label}
               </button>
@@ -92,7 +92,6 @@ export default function Navbar() {
                 { href: "/student/profile", label: "Profile" },
                 { href: "/student/attendance", label: "Attendance" },
                 { href: "/student/time-table", label: "Time Table" },
-                { href: "/student/result", label: "Result" },
             ].map((item) => (
               <button
                 key={item.href}

@@ -22,6 +22,7 @@ import {
 const API_BASE = "http://localhost:5001/admin/attendance";
 
 const AttendancePage = () => {
+  const [isHydrated, setIsHydrated] = useState(false);
   const [students, setStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -77,6 +78,11 @@ const AttendancePage = () => {
 
   const router = useRouter();
 
+  // Handle hydration
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   // Check authentication
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -116,9 +122,12 @@ const AttendancePage = () => {
       if (!response.ok) throw new Error("Failed to fetch students");
       
       const data = await response.json();
-      setStudents(data.data || []);
+      // Ensure we always set an array
+      const studentsArray = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+      setStudents(studentsArray);
     } catch (error) {
       console.error("Failed to fetch students:", error);
+      setStudents([]); // Ensure students is always an array on error
     }
   };
 
@@ -136,9 +145,12 @@ const AttendancePage = () => {
       if (!response.ok) throw new Error("Failed to fetch teachers");
       
       const data = await response.json();
-      setTeachers(data || []);
+      // Ensure we always set an array
+      const teachersArray = Array.isArray(data) ? data : (data?.data && Array.isArray(data.data)) ? data.data : [];
+      setTeachers(teachersArray);
     } catch (error) {
       console.error("Failed to fetch teachers:", error);
+      setTeachers([]); // Ensure teachers is always an array on error
     }
   };
 
@@ -663,7 +675,30 @@ const AttendancePage = () => {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 400 && (
+          data.message.includes('already been marked') || 
+          data.message.includes('once per day') ||
+          data.error === 'DUPLICATE_ATTENDANCE' ||
+          data.message.includes('already exists')
+        )) {
+          alert(data.message);
+          return;
+        }
         throw new Error(data.message || "Failed to save attendance");
+      }
+
+      // Check if there were any duplicate errors in bulk response
+      if (data.data && data.data.error_count > 0) {
+        const duplicateErrors = data.data.failed_records.filter(record => 
+          record.error.includes('DUPLICATE_ATTENDANCE') || 
+          record.error.includes('already exists')
+        );
+        
+        if (duplicateErrors.length > 0) {
+          alert(`Attendance has already been marked for this class on ${classAttendanceData.date} for ${classAttendanceData.subject}. You can only mark attendance once per day for each class.`);
+          return;
+        }
       }
 
       alert(`Attendance saved successfully: ${data.data.success_count} records created`);
@@ -675,7 +710,14 @@ const AttendancePage = () => {
       setFilters(prev => ({ ...prev, class: "", section: "" }));
       
     } catch (error) {
-      alert(error.message);
+      // Don't show generic server errors to user
+      if (!error.message.includes('already been marked') && 
+          !error.message.includes('once per day')) {
+        console.error('Error saving attendance:', error);
+        alert('An unexpected error occurred while saving attendance. Please try again.');
+      } else {
+        alert(error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -705,14 +747,19 @@ const AttendancePage = () => {
   };
 
   // Get unique classes and sections
-  const uniqueClasses = [...new Set(students.map(s => s.class))].filter(Boolean);
-  const uniqueSections = [...new Set(students.map(s => s.section))].filter(Boolean);
+  const uniqueClasses = [...new Set(Array.isArray(students) ? students.map(s => s.class) : [])].filter(Boolean);
+  const uniqueSections = [...new Set(Array.isArray(students) ? students.map(s => s.section) : [])].filter(Boolean);
+
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isHydrated) {
+    return null;
+  }
 
   if (loading && students.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" suppressHydrationWarning>
+        <div className="text-center" suppressHydrationWarning>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" suppressHydrationWarning></div>
           <p className="mt-4 text-gray-600">Loading attendance data...</p>
         </div>
       </div>
@@ -720,22 +767,22 @@ const AttendancePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" suppressHydrationWarning>
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="bg-blue-100 p-2 rounded-lg">
+      <div className="bg-white shadow-sm border-b" suppressHydrationWarning>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" suppressHydrationWarning>
+          <div className="flex items-center space-x-3 mb-4" suppressHydrationWarning>
+            <div className="bg-blue-100 p-2 rounded-lg" suppressHydrationWarning>
               <Calendar className="w-6 h-6 text-blue-600" />
             </div>
-            <div>
+            <div suppressHydrationWarning>
               <h1 className="text-2xl font-bold text-gray-900">Attendance Management</h1>
               <p className="text-gray-600">Mark and view attendance records</p>
             </div>
           </div>
           
           {/* Tabs */}
-          <div className="flex space-x-1">
+          <div className="flex space-x-1" suppressHydrationWarning>
             <button
               onClick={() => {
                 setShowViewAttendance(false);
@@ -766,18 +813,18 @@ const AttendancePage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" suppressHydrationWarning>
         {!showViewAttendance ? (
           // Mark Attendance Section
           <>
             {/* Filters */}
-            <div className="text-black bg-white rounded-xl shadow-sm mb-6 border border-gray-200">
-          <div className="p-4 border-b border-gray-200">
+            <div className="text-black bg-white rounded-xl shadow-sm mb-6 border border-gray-200" suppressHydrationWarning>
+          <div className="p-4 border-b border-gray-200" suppressHydrationWarning>
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center justify-between w-full text-left"
             >
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2" suppressHydrationWarning>
                 <Filter className="w-5 h-5 text-gray-500" />
                 <span className="font-medium text-gray-900">Filters</span>
               </div>
@@ -790,9 +837,9 @@ const AttendancePage = () => {
           </div>
 
           {showFilters && (
-            <div className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
+            <div className="p-4" suppressHydrationWarning>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" suppressHydrationWarning>
+                <div suppressHydrationWarning>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
                   <input
                     type="text"
@@ -803,7 +850,7 @@ const AttendancePage = () => {
                   />
                 </div>
 
-                <div>
+                <div suppressHydrationWarning>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
                   <select
                     value={filters.teacher_id}
@@ -811,7 +858,7 @@ const AttendancePage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">Select Teacher</option>
-                    {teachers.map(teacher => (
+                    {Array.isArray(teachers) && teachers.map(teacher => (
                       <option key={teacher.id} value={teacher.id}>
                         {teacher.name}
                       </option>
@@ -819,7 +866,7 @@ const AttendancePage = () => {
                   </select>
                 </div>
 
-                <div>
+                <div suppressHydrationWarning>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
                   <select
                     value={filters.class}
@@ -833,7 +880,7 @@ const AttendancePage = () => {
                   </select>
                 </div>
 
-                <div>
+                <div suppressHydrationWarning>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
                   <select
                     value={filters.section}
@@ -848,7 +895,7 @@ const AttendancePage = () => {
                 </div>
               </div>
 
-              <div className="mt-4 flex space-x-3">
+              <div className="mt-4 flex space-x-3" suppressHydrationWarning>
                 <button
                   onClick={clearFilters}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
@@ -862,18 +909,18 @@ const AttendancePage = () => {
 
         {/* Class Attendance Section */}
         {showClassAttendance && classStudents.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6" suppressHydrationWarning>
+            <div className="p-6 border-b border-gray-200" suppressHydrationWarning>
+              <div className="flex items-center justify-between" suppressHydrationWarning>
+                <div suppressHydrationWarning>
                   <h2 className="text-lg font-semibold text-gray-900">
                     Mark Attendance - Class {filters.class}{filters.section && `-${filters.section}`}
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    {classStudents.length} students • Subject: {filters.subject} • Teacher: {teachers.find(t => t.id == filters.teacher_id)?.name} • Date: {new Date().toLocaleDateString()}
+                    {classStudents.length} students • Subject: {filters.subject} • Teacher: {Array.isArray(teachers) ? teachers.find(t => t.id == filters.teacher_id)?.name || 'Unknown' : 'Unknown'} • Date: {new Date().toLocaleDateString()}
                   </p>
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex space-x-3" suppressHydrationWarning>
                   <button
                     onClick={() => {
                       const updatedStudents = classStudents.map(student => ({
@@ -946,8 +993,8 @@ const AttendancePage = () => {
                       } hover:bg-blue-50 transition-colors`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="bg-blue-100 p-2 rounded-full mr-3">
+                        <div className="flex items-center" suppressHydrationWarning>
+                          <div className="bg-blue-100 p-2 rounded-full mr-3" suppressHydrationWarning>
                             <Users className="w-4 h-4 text-blue-600" />
                           </div>
                           <div className="text-sm font-medium text-gray-900">
@@ -991,8 +1038,8 @@ const AttendancePage = () => {
               </table>
             </div>
 
-            <div className="p-4 bg-gray-50 border-t border-gray-200">
-              <div className="flex justify-between text-sm">
+            <div className="p-4 bg-gray-50 border-t border-gray-200" suppressHydrationWarning>
+              <div className="flex justify-between text-sm" suppressHydrationWarning>
                 <span className="text-gray-700">
                   Present: <span className="font-semibold text-green-600">
                     {classStudents.filter(s => s.isPresent).length}
@@ -1017,16 +1064,16 @@ const AttendancePage = () => {
           // View Attendance Section
           <>
             {/* View Attendance Filters */}
-            <div className="text-black bg-white rounded-xl shadow-sm mb-6 border border-gray-200">
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
+            <div className="text-black bg-white rounded-xl shadow-sm mb-6 border border-gray-200" suppressHydrationWarning>
+              <div className="p-4 border-b border-gray-200" suppressHydrationWarning>
+                <div className="flex items-center justify-between" suppressHydrationWarning>
+                  <div className="flex items-center space-x-2" suppressHydrationWarning>
                     <Eye className="w-5 h-5 text-gray-500" />
                     <span className="font-medium text-gray-900">View Attendance</span>
                   </div>
                   
                   {/* View Type Tabs */}
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2" suppressHydrationWarning>
                     <button
                       onClick={() => {
                         setViewType('subject');

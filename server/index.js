@@ -34,6 +34,10 @@ app.use("/student/timetable", require("./routes/student/timetableRoute.js")); //
 
 // teacher -- >>>
 app.use("/teacher/auth", require("./routes/teacher/auth.js")); // teacher login and authentication
+app.use("/teacher", require("./routes/teacher/profile.js")); // teacher profile management
+app.use("/teacher", require("./routes/teacher/timetableRoute.js")); // teacher timetable management
+app.use("/teacher", require("./routes/teacher/teacherRoute.js")); // teacher student management
+app.use("/teacher/attendance", require("./routes/teacher/attendanceRoute.js")); // teacher attendance management
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

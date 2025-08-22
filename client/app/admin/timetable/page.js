@@ -771,7 +771,7 @@ export default function AdminTimetable() {
                     }
                     className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     required
-                    placeholder="e.g. 12A"
+                    placeholder="e.g. 12A (class,section)"
                   />
                 </div>
                 <div>
@@ -787,6 +787,7 @@ export default function AdminTimetable() {
                         className: e.target.value,
                       })
                     }
+                    placeholder="e.g Class 12 (A)"
                     className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     required
                   />
