@@ -49,7 +49,6 @@ export default function TeacherLoginPage() {
       });
 
       const data = await response.json();
-      console.log('Teacher login response:', data);
 
       if (!data.success) {
         setError(data.message || 'Login failed');

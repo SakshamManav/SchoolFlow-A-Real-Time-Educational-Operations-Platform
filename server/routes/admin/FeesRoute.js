@@ -6,8 +6,7 @@ const authenticateToken = require("../../middleware/admin/authMiddleware");
 // Create fee
 router.post("/createfees", authenticateToken, async (req, res) => {
   try {
-    const school_id = req.user.id;
-    console.log(school_id)
+  const school_id = req.user.id;
     const result = await feesModel.createFee(req.body, school_id);
     res.status(201).json({
       success: true,

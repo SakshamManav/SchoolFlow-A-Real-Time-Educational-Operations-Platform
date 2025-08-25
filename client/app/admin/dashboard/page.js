@@ -152,8 +152,6 @@ const Dashboard = () => {
         totalTeachers,
         totalClasses: uniqueClasses.size
       };
-
-      console.log("Final stats:", newStats);
       setStats(newStats);
 
       // Update recent activities with real data

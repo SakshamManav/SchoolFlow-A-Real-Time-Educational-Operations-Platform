@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const db = require("../../database/db");
 const jwt = require("jsonwebtoken");
 const authToken = require("../../middleware/admin/authMiddleware")
-const SECRET_KEY = "your_secret_key"; // In real apps, store in .env
+const SECRET_KEY = process.env.JWT_SECRET; // from .env
 
 // Register
 router.post("/register", async (req, res) => {

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import AuthWrapper from "../components/AuthWrapper";
 import {
   CalendarDays,
   BarChart2,
@@ -60,50 +61,46 @@ function StudentDashboard() {
 
     try {
       // Fetch today's timetable - use full timetable API and filter for today
-      console.log('Fetching full timetable to get today\'s schedule...');
       const timetableResponse = await fetch('http://localhost:5001/student/timetable/my-timetable', {
         headers
       });
       
       if (timetableResponse.ok) {
         const timetableData = await timetableResponse.json();
-        console.log('Full timetable response:', timetableData);
         
         if (timetableData.success && timetableData.data && timetableData.data.timetable) {
           // Get today's day name
           const today = new Date();
           const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
           const currentDay = daysOfWeek[today.getDay()];
-          console.log('Current day:', currentDay);
           
           // Get today's schedule from the full timetable
           const todaySchedule = timetableData.data.timetable[currentDay] || [];
-          console.log('Today\'s schedule:', todaySchedule);
           setTodayTimetable(todaySchedule);
         } else {
-          console.log('No timetable data available');
           setTodayTimetable([]);
         }
       } else {
-        console.error('Timetable API error:', timetableResponse.status, await timetableResponse.text());
+        const errorData = await timetableResponse.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || 'Failed to fetch timetable';
+        console.error('Timetable API error:', timetableResponse.status, errorMessage);
         setTodayTimetable([]);
+        
+        // Store error message if it's a meaningful error (not just network issue)
+  if (timetableResponse.status === 404 || timetableResponse.status === 400) {}
       }
 
       // Fetch attendance stats - use the correct endpoint from working attendance page
-      console.log('Fetching attendance stats for student ID:', studentId);
       const attendanceResponse = await fetch(`http://localhost:5001/student/profile/attendance-stats/${studentId}`, {
         headers
       });
       
       if (attendanceResponse.ok) {
         const attendanceData = await attendanceResponse.json();
-        console.log('Attendance response:', attendanceData);
         
         if (attendanceData.success && attendanceData.data) {
           setAttendanceStats(attendanceData.data);
-          console.log('Attendance stats set:', attendanceData.data);
         } else {
-          console.log('No attendance data available');
           setAttendanceStats(null);
         }
       } else {
@@ -173,7 +170,8 @@ function StudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <AuthWrapper>
+      <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -247,8 +245,18 @@ function StudentDashboard() {
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>No classes scheduled for today ({today.toLocaleDateString('en-US', { weekday: 'long' })})</p>
-                  <p className="text-xs mt-1">Check if timetable is available for your class</p>
+                  <p className="text-sm font-medium">No classes scheduled for today</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {today.toLocaleDateString('en-US', { weekday: 'long' })}
+                  </p>
+                  <div className="mt-3">
+                    <button
+                      onClick={() => window.location.href = '/student/time-table'}
+                      className="text-xs text-indigo-600 hover:text-indigo-700 underline"
+                    >
+                      View full timetable
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -340,6 +348,7 @@ function StudentDashboard() {
         </div>
       </div>
     </div>
+    </AuthWrapper>
   );
 }
 

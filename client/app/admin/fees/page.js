@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import AuthWrapper from "../components/AuthWrapper";
 import { CreditCard, Calendar, DollarSign, History, User, Hash, FileText, Trash2, Search, Printer } from 'lucide-react';
 
 
@@ -51,7 +52,6 @@ const FeesPage = () => {
           throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Students response:', data);
         setAllStudents(Array.isArray(data) ? data : data.data || []);
       } catch (err) {
         console.error('Fetch students error:', err);
@@ -81,7 +81,6 @@ const FeesPage = () => {
           },
         });
         const data = await response.json();
-        console.log('Fee history response:', data);
         if (!data.success) throw new Error(data.message || 'Failed to fetch fee history');
         setFeeHistory(data.data || []);
       } catch (err) {
@@ -97,16 +96,11 @@ const FeesPage = () => {
 
   // Log selectedClass, studentsInClass, and currentStudent for debugging
   useEffect(() => {
-    console.log('Selected class:', selectedClass);
-    console.log('studentsInClass:', studentsInClass);
-    console.log('Selected student:', selectedStudent);
-    console.log('Current student:', currentStudent);
-    console.log('Search term:', searchTerm);
+    
   }, [selectedClass, selectedStudent, searchTerm]);
 
   const handleClassChange = (e) => {
     const newClass = e.target.value;
-    console.log('Class changed to:', newClass);
     setSelectedClass(newClass);
     setSelectedStudent('');
     setSearchTerm('');
@@ -130,7 +124,6 @@ const FeesPage = () => {
 
   const handleStudentChange = (e) => {
     const newStudent = e.target.value;
-    console.log('Student changed to:', newStudent);
     setSelectedStudent(newStudent);
     setFormData({
       month_for: '',
@@ -153,11 +146,9 @@ const FeesPage = () => {
     const term = e.target.value;
     setSearchTerm(term);
     setSelectedStudent('');
-    console.log('Search term changed to:', term);
   };
 
   const handleFormChange = (e) => {
-    console.log(formData);
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -199,7 +190,6 @@ const FeesPage = () => {
       });
 
       const data = await response.json();
-      console.log('Create fee response:', data);
       if (!data.success) {
         if (data.message === 'Invalid or expired token') {
           localStorage.removeItem("token");
@@ -218,7 +208,6 @@ const FeesPage = () => {
         },
       });
       const historyData = await historyResponse.json();
-      console.log('Refresh fee history response:', historyData);
       if (historyData.success) setFeeHistory(historyData.data || []);
 
       // Reset form
@@ -258,7 +247,6 @@ const FeesPage = () => {
         },
       });
       const data = await response.json();
-      console.log('Delete fee response:', data);
       if (!data.success) {
         if (data.message === 'Invalid or expired token') {
           localStorage.removeItem("token");
@@ -276,7 +264,6 @@ const FeesPage = () => {
         },
       });
       const historyData = await historyResponse.json();
-      console.log('Refresh fee history after delete response:', historyData);
       if (historyData.success) setFeeHistory(historyData.data || []);
       alert('Fee record deleted successfully!');
     } catch (err) {
@@ -468,7 +455,6 @@ const FeesPage = () => {
     ? allStudents.filter(student => {
         const classNumber = getClassNumber(selectedClass);
         const studentClass = parseInt(student.class, 10);
-        console.log('Filtering student:', student, 'classNumber:', classNumber, 'studentClass:', studentClass);
         return studentClass === classNumber;
       })
     : [];
@@ -505,6 +491,7 @@ const FeesPage = () => {
   const paymentModes = ['Cash', 'Card', 'Online', 'UPI', 'Bank Transfer'];
 
   return (
+    <AuthWrapper>
       <div
         className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-4"
         suppressHydrationWarning={true}
@@ -978,6 +965,7 @@ const FeesPage = () => {
           )}
         </div>
       </div>
+    </AuthWrapper>
   );
 };
 

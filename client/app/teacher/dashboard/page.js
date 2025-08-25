@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
+import TeacherAuthWrapper from "../components/AuthWrapper";
 import {
   Users,
   BookOpen,
@@ -16,6 +18,7 @@ import {
 } from "lucide-react";
 
 const TeacherDashboard = () => {
+  const router = useRouter();
   const [teacherData, setTeacherData] = useState(null);
   const [stats, setStats] = useState({
     totalClasses: 0,
@@ -55,9 +58,6 @@ const TeacherDashboard = () => {
 
   const fetchDashboardData = async (teacher, token) => {
     try {
-      // Debug: Log teacher data to understand the class_assigned format
-      console.log('Teacher data:', teacher);
-      console.log('Class assigned:', teacher.class_assigned);
       
       // Try to fetch detailed data from the teacher API (same as attendance page)
       try {
@@ -67,10 +67,16 @@ const TeacherDashboard = () => {
             'Content-Type': 'application/json'
           }
         });
+        // Handle expired/invalid token: auto-logout and redirect
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('teacher_token');
+          localStorage.removeItem('teacher_user');
+          router.replace('/teacher/login?session=expired');
+          return;
+        }
         
         if (response.ok) {
           const data = await response.json();
-          console.log('Teacher API data:', data);
           
           if (data.success && data.data) {
             const apiData = data.data;
@@ -94,14 +100,12 @@ const TeacherDashboard = () => {
           }
         }
       } catch (error) {
-        console.log('Could not fetch from teacher API, falling back to simple parsing:', error);
+  console.error('Could not fetch from teacher API, falling back to simple parsing:', error);
       }
       
       // Fallback: Extract class information from teacher data (simple parsing)
       const assignedClasses = teacher.class_assigned ? 
         teacher.class_assigned.split(',').map(cls => cls.trim()) : [];
-      
-      console.log('Parsed assigned classes (fallback):', assignedClasses);
       
       // Set stats based on teacher data
       setStats({
@@ -156,7 +160,8 @@ const TeacherDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <TeacherAuthWrapper>
+      <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -290,6 +295,7 @@ const TeacherDashboard = () => {
           </div>
         </div>
       </div>
+    </TeacherAuthWrapper>
   );
 };
 

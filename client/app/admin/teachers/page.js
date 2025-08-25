@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import AuthWrapper from "../components/AuthWrapper";
 import { Eye, X, Edit, Trash2, Users, Mail, Phone, DollarSign, Calendar, MapPin, GraduationCap, Briefcase, Upload, User } from 'lucide-react';
 
 const TeachersPage = () => {
@@ -204,11 +205,9 @@ const TeachersPage = () => {
             'Content-Type': 'application/json'
           }
         });
-        const result = await response.json()
-        console.log(result)
+        const result = await response.json();
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Delete failed');
+          throw new Error(result.error || 'Delete failed');
         }
         alert('Teacher deleted successfully');
         fetchTeachers();
@@ -235,7 +234,8 @@ const TeachersPage = () => {
     : (teachers || []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
+    <AuthWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
       {!mounted ? (
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -304,7 +304,7 @@ const TeachersPage = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">AG ID</th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Teacher ID</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
@@ -317,7 +317,7 @@ const TeachersPage = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredTeachers.map((teacher, idx) => (
                     <tr key={teacher.id} className={idx % 2 === 0 ? "bg-white hover:bg-purple-50 transition-colors" : "bg-purple-50 hover:bg-purple-100 transition-colors"}>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">AG{teacher.id}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{teacher.teacher_id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div className="flex items-center gap-2">
@@ -624,8 +624,8 @@ const TeachersPage = () => {
                       <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Basic Information</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm font-medium text-gray-500">AG ID</label>
-                          <p className="text-lg font-semibold text-gray-900">AG{selectedTeacher.id}</p>
+                          <label className="text-sm font-medium text-gray-500">System ID</label>
+                          <p className="text-lg font-semibold text-gray-900">{selectedTeacher.id}</p>
                         </div>
                         <div>
                           <label className="text-sm font-medium text-gray-500">Teacher ID</label>
@@ -778,6 +778,7 @@ const TeachersPage = () => {
         </div>
       )}
     </div>
+    </AuthWrapper>
   );
 };
 

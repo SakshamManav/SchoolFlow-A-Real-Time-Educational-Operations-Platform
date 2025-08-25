@@ -43,7 +43,6 @@ export default function StudentLoginPage() {
       });
 
       const data = await response.json();
-      console.log('Login response:', data);
 
       if (!data.success) {
         alert(data.message || 'Login failed');
@@ -59,7 +58,7 @@ export default function StudentLoginPage() {
       alert(data.message || 'Login successful!');
       router.push('/student/dashboard');
     } catch (err) {
-      console.error('Login error:', err);
+  console.error('Login error:', err);
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);

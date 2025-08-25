@@ -20,7 +20,7 @@ router.get("/getuserbyid/:id", authenticateToken, async (req, res) => {
 
     res.json(user);
   } catch (err) {
-    console.log(err)
+  console.error(err)
     
     res.status(500).json({ error: err.message });
   }

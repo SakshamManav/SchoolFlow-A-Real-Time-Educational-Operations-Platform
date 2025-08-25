@@ -317,17 +317,14 @@ const teacherAttendanceQueries = {
     const classNameFromTimetable = authCheck[0].class_name;
     const authorizedClassId = authCheck[0].class_id;
 
-    // Debug log to check what we got
-    console.log('Class lookup - teacherId:', teacherId, 'schoolId:', schoolId, 'classId:', classId, 'subject:', subject);
-    console.log('Found className:', classNameFromTimetable, 'authorizedClassId:', authorizedClassId);
+  // Debug logs removed
 
     if (!classNameFromTimetable) {
       throw new Error('Class name not found for the given class ID');
     }
 
     // Parse class_id to extract class name and section
-    const parsedClassInfo = this.parseClassId(classId);
-    console.log('Parsed class info:', parsedClassInfo);
+  const parsedClassInfo = this.parseClassId(classId);
 
     // Get students in the specific class and section
     let studentsQuery;
@@ -363,8 +360,7 @@ const teacherAttendanceQueries = {
       queryParams = [schoolId, classNameFromTimetable];
     }
 
-    console.log('Student query:', studentsQuery);
-    console.log('Query params:', queryParams);
+    
 
     const [students] = await db.query(studentsQuery, queryParams);
     

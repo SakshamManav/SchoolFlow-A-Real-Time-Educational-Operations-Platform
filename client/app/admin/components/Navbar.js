@@ -4,15 +4,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Menu, X, User, GraduationCap, LogOut, ChevronDown, Phone, PlaneTakeoff } from 'lucide-react';
+import { useNavigationLoader } from '../../context/NavigationContext';
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const profileRef = useRef(null);
   const router = useRouter();
   const pathname = usePathname();
+  const { startNavigation } = useNavigationLoader();
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
@@ -24,16 +25,10 @@ export default function Navbar() {
   // Custom navigation handler with loading state
   const handleNavigation = (href) => {
     if (pathname !== href) {
-      setIsLoading(true);
       setMenuOpen(false); // Close mobile menu
-      router.push(href);
+      startNavigation(href);
     }
   };
-
-  // Reset loading state when pathname changes
-  useEffect(() => {
-    setIsLoading(false);
-  }, [pathname]);
 
   const handleSignOut = () => {
     localStorage.removeItem("token");
@@ -51,14 +46,12 @@ export default function Navbar() {
     const token = localStorage.getItem("token");
     if (!token) {
       setUser(undefined); // Explicitly set to undefined to indicate no user
-      console.log('No token found, user set to undefined');
       return;
     }
 
     const storedUser = localStorage.getItem("user");
     const parsedUser = storedUser ? JSON.parse(storedUser) : null;
     setUser(parsedUser);
-    console.log('User:', parsedUser);
 
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -276,38 +269,6 @@ export default function Navbar() {
         )}
       </div>
     </nav>
-    
-    {/* Loading Progress Bar */}
-    {isLoading && (
-      <div className="fixed top-16 left-0 right-0 z-40">
-        <div className="h-1 bg-gray-200/50">
-          <div 
-            className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-in-out"
-            style={{
-              width: '0%',
-              animation: 'loadingBar 2s ease-in-out infinite'
-            }}
-          ></div>
-        </div>
-      </div>
-    )}
-    
-    <style jsx global>{`
-      @keyframes loadingBar {
-        0% { 
-          width: 0%; 
-          margin-left: 0%; 
-        }
-        50% { 
-          width: 75%; 
-          margin-left: 25%; 
-        }
-        100% { 
-          width: 0%; 
-          margin-left: 100%; 
-        }
-      }
-    `}</style>
   </>
   );
 }

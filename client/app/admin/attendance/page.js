@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AuthWrapper from "../components/AuthWrapper";
 import {
   Calendar,
   Users,
@@ -449,8 +450,7 @@ const AttendancePage = () => {
       const data = await response.json();
       const records = data.data || [];
       
-      console.log("Overall attendance raw records:", records);
-      console.log("Sample record:", records[0]);
+      
       
       // Group by student and calculate overall stats across all subjects
       const studentGroups = {};
@@ -472,7 +472,6 @@ const AttendancePage = () => {
         studentGroups[studentId].records.push(record);
         studentGroups[studentId].totalRecords++;
         // Case-insensitive status comparison - backend uses 'Present'/'Absent'
-        console.log("Processing record:", record.student_name, "Status:", record.status);
         if (record.status && (record.status === 'Present' || record.status.toLowerCase() === 'present')) {
           studentGroups[studentId].presentCount++;
         } else {
@@ -488,7 +487,6 @@ const AttendancePage = () => {
           : 0
       })).sort((a, b) => b.attendancePercentage - a.attendancePercentage);
 
-      console.log("Final student attendance calculation:", studentAttendance);
       return studentAttendance;
     } catch (error) {
       console.error("Failed to fetch overall student attendance:", error);
@@ -767,7 +765,8 @@ const AttendancePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" suppressHydrationWarning>
+    <AuthWrapper>
+      <div className="min-h-screen bg-gray-50" suppressHydrationWarning>
       {/* Header */}
       <div className="bg-white shadow-sm border-b" suppressHydrationWarning>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" suppressHydrationWarning>
@@ -1630,6 +1629,7 @@ const AttendancePage = () => {
         )}
       </div>
     </div>
+    </AuthWrapper>
   );
 };
 

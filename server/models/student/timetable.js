@@ -20,20 +20,32 @@ const StudentTimetable = {
       const studentInfo = await this.getStudentClass(studentId);
       const { class: studentClass, section, school_id: schoolId } = studentInfo;
       
-      // Try different formats for class_id
+      
+      
+      // Validate school_id
+      if (!schoolId) {
+        throw new Error('Student school information is incomplete');
+      }
+      
+      // Try different formats for class_id in order of preference
       const possibleClassIds = [
-        `${studentClass}${section}`,     // 12A
-        `${studentClass}-${section}`,    // 12-A
-        `${studentClass} ${section}`,    // 12 A
-        studentClass,                    // 12
-        `Class ${studentClass}${section}` // Class 12A
+        `${studentClass}${section || ''}`,     // 12A (most specific)
+        `${studentClass}-${section || ''}`,    // 12-A
+        `${studentClass} ${section || ''}`,    // 12 A
+        studentClass,                          // 12 (fallback to class only)
+        `Class ${studentClass}${section || ''}`, // Class 12A
+        `Class ${studentClass}`,               // Class 12
       ];
+
+      
+      
 
       let classRows = [];
       let matchedClassId = null;
 
       // Try each possible class_id format
       for (const classId of possibleClassIds) {
+        
         const [rows] = await db.execute(
           'SELECT school_days, class_id FROM timetable WHERE school_id = ? AND class_id = ? LIMIT 1',
           [schoolId, classId]
@@ -42,17 +54,27 @@ const StudentTimetable = {
         if (rows.length > 0) {
           classRows = rows;
           matchedClassId = classId;
+          
           break;
         }
       }
       
       if (classRows.length === 0) {
-        // Get available timetables for better error message
+        // Always show class-specific error regardless of whether school has timetables or not
         const [allTimetables] = await db.execute(
           'SELECT DISTINCT class_id, class_name FROM timetable WHERE school_id = ?',
           [schoolId]
         );
-        throw new Error(`Timetable not found for your class (${studentClass}${section}). Available classes: ${allTimetables.map(t => t.class_id).join(', ')}`);
+        
+        if (allTimetables.length === 0) {
+          // Even if no timetables exist for school, show class-specific error
+          
+          throw new Error(`No timetable available for your class (${studentClass}${section || ''}). No classes have been set up in your school yet.`);
+        }
+        
+        const availableClasses = allTimetables.map(t => t.class_id).join(', ');
+        
+        throw new Error(`No timetable available for your class (${studentClass}${section || ''}). Available classes in your school: ${availableClasses}`);
       }
       
       const days = classRows[0].school_days.split(',');
@@ -93,17 +115,65 @@ const StudentTimetable = {
     try {
       const studentInfo = await this.getStudentClass(studentId);
       const { class: studentClass, section, school_id: schoolId } = studentInfo;
-      const classId = `${studentClass}${section}`;
+      
+      
+      
+      // Validate school_id
+      if (!schoolId) {
+        throw new Error('Student school information is incomplete');
+      }
+      
+      // Use the same flexible matching logic as getStudentTimetable
+      const possibleClassIds = [
+        `${studentClass}${section || ''}`,     // 12A
+        `${studentClass}-${section || ''}`,    // 12-A
+        `${studentClass} ${section || ''}`,    // 12 A
+        studentClass,                          // 12
+        `Class ${studentClass}${section || ''}`, // Class 12A
+        `Class ${studentClass}`,               // Class 12
+      ];
+
+      let matchedClassId = null;
+      for (const classId of possibleClassIds) {
+        const [rows] = await db.execute(
+          'SELECT class_id FROM timetable WHERE school_id = ? AND class_id = ? LIMIT 1',
+          [schoolId, classId]
+        );
+        
+        if (rows.length > 0) {
+          matchedClassId = classId;
+          
+          break;
+        }
+      }
+
+      if (!matchedClassId) {
+        // Always show class-specific error regardless of whether school has timetables or not
+        const [allTimetables] = await db.execute(
+          'SELECT DISTINCT class_id FROM timetable WHERE school_id = ?',
+          [schoolId]
+        );
+        
+        if (allTimetables.length === 0) {
+          // Even if no timetables exist for school, show class-specific error
+          throw new Error(`No timetable available for your class (${studentClass}${section || ''}). No classes have been set up in your school yet.`);
+        }
+        
+        const availableClasses = allTimetables.map(t => t.class_id).join(', ');
+        throw new Error(`No timetable available for your class (${studentClass}${section || ''}). Available classes: ${availableClasses}`);
+      }
 
       // Get current day of week
       const today = new Date();
       const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const currentDay = daysOfWeek[today.getDay()];
 
+      
+
       // Get today's timetable
       const [todayTimetableRows] = await db.execute(
         'SELECT time_slot, subject, teacher, room FROM timetable WHERE school_id = ? AND class_id = ? AND day = ? ORDER BY time_slot',
-        [schoolId, classId, currentDay]
+        [schoolId, matchedClassId, currentDay]
       );
 
       const todaySchedule = todayTimetableRows.map(row => ({

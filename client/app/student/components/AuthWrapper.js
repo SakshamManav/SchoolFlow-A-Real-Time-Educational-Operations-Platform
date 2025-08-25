@@ -4,41 +4,48 @@ import { useRouter } from 'next/navigation';
 
 export default function StudentAuthWrapper({ children }) {
     const router = useRouter();
-    const [hydrated, setHydrated] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setHydrated(true);
-        // Only run client-side
-        setTimeout(() => {
-            const studentToken = window.localStorage.getItem('student_token');
-            const studentUser = window.localStorage.getItem('student_user');
-            console.log('AuthWrapper - Checking auth state:');
-            console.log('Token exists:', !!studentToken);
-            console.log('User data exists:', !!studentUser);
+        const checkAuth = () => {
+            if (typeof window === 'undefined') return;
+
+            const studentToken = localStorage.getItem('student_token');
+            const studentUser = localStorage.getItem('student_user');
+            
             if (!studentToken || !studentUser) {
-                console.log('Authentication failed, redirecting to login...');
+                setIsAuthenticated(false);
+                setIsLoading(false);
+                // Redirect immediately without showing content
                 router.replace('/student/login');
                 return;
             }
+            
             setIsAuthenticated(true);
-            setLoading(false);
-        }, 100);
+            setIsLoading(false);
+        };
+
+        // Check immediately
+        checkAuth();
     }, [router]);
 
-    // Hydration guard
-    if (!hydrated) return null;
-
-    // Show loading state
-    if (loading) {
+    // Show loading state while checking authentication
+    if (isLoading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-2 text-gray-600">Loading...</p>
+                </div>
             </div>
         );
     }
 
-    // Only render children if authenticated
-    return isAuthenticated ? children : null;
+    // Don't render anything if not authenticated (redirecting)
+    if (!isAuthenticated) {
+        return null;
+    }
+
+    return <>{children}</>;
 }

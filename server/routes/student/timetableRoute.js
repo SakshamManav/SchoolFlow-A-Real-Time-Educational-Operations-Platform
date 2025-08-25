@@ -6,8 +6,7 @@ const authenticateToken = require('../../middleware/student/authmiddleware');
 // Get student's complete timetable
 router.get('/my-timetable', authenticateToken, async (req, res) => {
   try {
-    const studentId = req.user.id;
-    console.log(`Fetching timetable for studentId: ${studentId}`);
+  const studentId = req.user.id;
     
     const timetableData = await StudentTimetable.getStudentTimetable(studentId);
     
@@ -22,20 +21,34 @@ router.get('/my-timetable', authenticateToken, async (req, res) => {
     if (error.message === 'Student not found') {
       return res.status(404).json({ 
         success: false, 
-        error: 'Student record not found' 
+        message: 'Student record not found' 
       });
     }
     
-    if (error.message === 'Timetable not found for your class') {
+    if (error.message === 'Student school information is incomplete') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Your school information is incomplete. Please contact your administrator.' 
+      });
+    }
+    
+    if (error.message.includes('No timetable available for your class')) {
       return res.status(404).json({ 
         success: false, 
-        error: 'No timetable has been created for your class yet' 
+        message: error.message 
+      });
+    }
+    
+    if (error.message === 'No timetables available for your school') {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No timetables have been created for your school yet. Please contact your administrator.' 
       });
     }
     
     res.status(500).json({ 
       success: false, 
-      error: 'Failed to retrieve timetable' 
+      message: 'Failed to retrieve timetable. Please try again later.' 
     });
   }
 });
@@ -43,8 +56,7 @@ router.get('/my-timetable', authenticateToken, async (req, res) => {
 // Get today's schedule
 router.get('/today-schedule', authenticateToken, async (req, res) => {
   try {
-    const studentId = req.user.id;
-    console.log(`Fetching today's schedule for studentId: ${studentId}`);
+  const studentId = req.user.id;
     
     const todaySchedule = await StudentTimetable.getTodaySchedule(studentId);
     
@@ -59,13 +71,34 @@ router.get('/today-schedule', authenticateToken, async (req, res) => {
     if (error.message === 'Student not found') {
       return res.status(404).json({ 
         success: false, 
-        error: 'Student record not found' 
+        message: 'Student record not found' 
+      });
+    }
+    
+    if (error.message === 'Student school information is incomplete') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Your school information is incomplete. Please contact your administrator.' 
+      });
+    }
+    
+    if (error.message.includes('No timetable available for your class')) {
+      return res.status(404).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+    
+    if (error.message === 'No timetables available for your school') {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No timetables have been created for your school yet.' 
       });
     }
     
     res.status(500).json({ 
       success: false, 
-      error: "Failed to retrieve today's schedule" 
+      message: "Failed to retrieve today's schedule. Please try again later." 
     });
   }
 });
@@ -73,8 +106,7 @@ router.get('/today-schedule', authenticateToken, async (req, res) => {
 // Get next class information
 router.get('/next-class', authenticateToken, async (req, res) => {
   try {
-    const studentId = req.user.id;
-    console.log(`Fetching next class for studentId: ${studentId}`);
+  const studentId = req.user.id;
     
     const nextClassInfo = await StudentTimetable.getNextClass(studentId);
     
@@ -103,8 +135,7 @@ router.get('/next-class', authenticateToken, async (req, res) => {
 // Get class information for student
 router.get('/class-info', authenticateToken, async (req, res) => {
   try {
-    const studentId = req.user.id;
-    console.log(`Fetching class info for studentId: ${studentId}`);
+  const studentId = req.user.id;
     
     const classInfo = await StudentTimetable.getStudentClass(studentId);
     

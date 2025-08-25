@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import TeacherAuthWrapper from "../components/AuthWrapper";
 import { Users, BookOpen, Calendar, Clock, Award, ChevronRight, Search, Filter, MapPin } from 'lucide-react';
 
 const TeacherClassesPage = () => {
@@ -159,7 +160,8 @@ const TeacherClassesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
+    <TeacherAuthWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -329,6 +331,7 @@ const TeacherClassesPage = () => {
         </div>
       </div>
     </div>
+    </TeacherAuthWrapper>
   );
 };
 

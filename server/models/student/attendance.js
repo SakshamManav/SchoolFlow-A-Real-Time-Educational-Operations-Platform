@@ -199,7 +199,7 @@ class StudentAttendance {
   // Get recent attendance (last N records)
   static async getRecentAttendance(student_id, school_id, limit = 10) {
     try {
-      console.log('getRecentAttendance called with:', { student_id, school_id, limit, limitType: typeof limit });
+  // debug log removed
       
       // Ensure all parameters are the correct data types
       const studentIdInt = parseInt(student_id);
@@ -222,7 +222,7 @@ class StudentAttendance {
       `;
       
       const params = [studentIdInt, schoolIdInt];
-      console.log('SQL params:', params);
+  // debug log removed
       
       const [rows] = await db.execute(query, params);
       return rows;

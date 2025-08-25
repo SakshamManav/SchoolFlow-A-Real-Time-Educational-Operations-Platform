@@ -7,7 +7,7 @@ const authenticateToken = require('../../middleware/admin/authMiddleware');
 router.get('/classes', authenticateToken, async (req, res) => {
   try {
     const schoolId = req.user.id;
-    console.log(`Fetching classes for schoolId: ${schoolId}`);
+    
     const classes = await Timetable.getAllClasses(schoolId);
     res.json({
       success: true,
@@ -24,7 +24,7 @@ router.get('/classes', authenticateToken, async (req, res) => {
 router.get('/timetable/:classId', authenticateToken, async (req, res) => {
   try {
     const schoolId = req.user.id;
-    console.log(`Fetching timetable for schoolId: ${schoolId}, classId: ${req.params.classId}`);
+    
     const timetable = await Timetable.getTimetableByClass(schoolId, req.params.classId);
     res.json({
       success: true,
@@ -41,7 +41,7 @@ router.get('/timetable/:classId', authenticateToken, async (req, res) => {
 router.post('/create', authenticateToken, async (req, res) => {
   const { classId, className, schoolDays, timetable } = req.body;
   const schoolId = req.user.id;
-  console.log('Received create class request:', { schoolId, classId, className, schoolDays, timetable });
+  
   if (!classId || !className || !schoolDays || !Array.isArray(schoolDays) || !timetable) {
     console.error('Invalid input for create class:', { classId, className, schoolDays, timetable });
     return res.status(400).json({
@@ -51,7 +51,7 @@ router.post('/create', authenticateToken, async (req, res) => {
   }
   try {
     const result = await Timetable.createClass(schoolId, classId, className, schoolDays, timetable);
-    console.log('Create class successful:', result);
+    
     res.status(201).json({
       success: true,
       message: 'Class and timetable created successfully',
@@ -67,7 +67,7 @@ router.post('/create', authenticateToken, async (req, res) => {
 router.post('/create/slot', authenticateToken, async (req, res) => {
   const { classId, className, schoolDays, day, timeSlot, subject, teacher, room } = req.body;
   const schoolId = req.user.id;
-  console.log('Received create slot request:', { schoolId, classId, className, schoolDays, day, timeSlot });
+  
   if (!classId || !className || !schoolDays || !Array.isArray(schoolDays) || !day || !timeSlot) {
     console.error('Invalid input for create slot:', { classId, className, schoolDays, day, timeSlot });
     return res.status(400).json({
@@ -93,7 +93,7 @@ router.put('/update/:classId', authenticateToken, async (req, res) => {
   const { schoolDays, timetable } = req.body;
   const schoolId = req.user.id;
   const classId = req.params.classId;
-  console.log('Received update timetable request:', { schoolId, classId, schoolDays, timetable });
+  
   if (!schoolDays || !Array.isArray(schoolDays) || !timetable) {
     console.error('Invalid input for update timetable:', { schoolDays, timetable });
     return res.status(400).json({
@@ -118,7 +118,7 @@ router.put('/update/:classId', authenticateToken, async (req, res) => {
 router.delete('/delete/slot', authenticateToken, async (req, res) => {
   const { classId, day, timeSlot } = req.body;
   const schoolId = req.user.id;
-  console.log('Received delete slot request:', { schoolId, classId, day, timeSlot });
+  
   if (!classId || !day || !timeSlot) {
     console.error('Invalid input for delete slot:', { classId, day, timeSlot });
     return res.status(400).json({
@@ -143,7 +143,7 @@ router.delete('/delete/slot', authenticateToken, async (req, res) => {
 router.delete('/delete/:classId', authenticateToken, async (req, res) => {
   const schoolId = req.user.id;
   const classId = req.params.classId;
-  console.log('Received delete class request:', { schoolId, classId });
+  
   try {
     await Timetable.deleteClass(schoolId, classId);
     res.json({

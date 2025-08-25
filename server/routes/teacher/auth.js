@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../../database/db');
 const teacherAuthMiddleware = require('../../middleware/teacher/authmiddleware');
-const SECRET_KEY = "your_secret_key";
+const SECRET_KEY = process.env.JWT_SECRET;
 
 // Teacher Login Route
 router.post('/login', async (req, res) => {
@@ -19,7 +19,7 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        console.log('Teacher login attempt for username:', username);
+        
 
         // Get teacher from database
         const [teachers] = await db.execute(
@@ -33,7 +33,7 @@ router.post('/login', async (req, res) => {
 
         // Check if teacher exists
         if (teachers.length === 0) {
-            console.log('Teacher not found or inactive for username:', username);
+            
             return res.status(401).json({
                 success: false,
                 message: "Invalid username or password"
@@ -41,12 +41,12 @@ router.post('/login', async (req, res) => {
         }
 
         const teacher = teachers[0];
-        console.log('Teacher found:', teacher.name, 'Role:', teacher.role);
+        
 
         // Verify password
         const validPassword = await bcrypt.compare(password, teacher.password);
         if (!validPassword) {
-            console.log('Invalid password for teacher:', username);
+            
             return res.status(401).json({
                 success: false,
                 message: "Invalid username or password"
@@ -76,7 +76,7 @@ router.post('/login', async (req, res) => {
             [teacher.id]
         );
 
-        console.log('Teacher login successful for:', teacher.name);
+        
 
         // Send response
         res.json({
@@ -142,7 +142,7 @@ router.post('/register', async (req, res) => {
             });
         }
 
-        console.log('Teacher registration attempt for:', name);
+        
 
         // Check if teacher already exists
         const [existingTeachers] = await db.execute(
@@ -176,7 +176,7 @@ router.post('/register', async (req, res) => {
             ]
         );
 
-        console.log('Teacher registered successfully:', name, 'ID:', result.insertId);
+        
 
         res.status(201).json({
             success: true,

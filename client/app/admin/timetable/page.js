@@ -1,6 +1,7 @@
 "use client";
 import Head from "next/head";
 import { useState, useEffect } from "react";
+import AuthWrapper from "../components/AuthWrapper";
 import { FaEye, FaEdit, FaTrash, FaPlus, FaChalkboardTeacher, FaBook, FaDoorOpen } from "react-icons/fa";
 
 export default function AdminTimetable() {
@@ -347,12 +348,6 @@ export default function AdminTimetable() {
     });
 
     try {
-      console.log("Sending create class request with body:", {
-        classId: createFormData.classId,
-        className: createFormData.className,
-        schoolDays: createFormData.schoolDays,
-        timetable: newTimetable,
-      });
       const response = await fetch("http://localhost:5001/admin/timetable/create", {
         method: "POST",
         headers: {
@@ -367,7 +362,6 @@ export default function AdminTimetable() {
         }),
       });
       const responseData = await response.json();
-      console.log("Create class response:", responseData);
       if (responseData.success) {
         setClasses((prev) => [
           ...prev,
@@ -472,7 +466,8 @@ export default function AdminTimetable() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-50 p-6">
+    <AuthWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-50 p-6">
       <Head>
         <title>Admin Timetable</title>
         <meta name="description" content="Admin Timetable Management" />
@@ -970,5 +965,6 @@ export default function AdminTimetable() {
         )}
       </main>
     </div>
+    </AuthWrapper>
   );
 }

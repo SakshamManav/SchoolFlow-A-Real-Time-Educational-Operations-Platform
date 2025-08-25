@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AuthWrapper from "../components/AuthWrapper";
 import {
   Users,
   Eye,
@@ -67,8 +68,7 @@ const StudentPage = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      const data = await res.json();
-      console.log(data)
+  const data = await res.json();
       if (!data.success) {
         if (data.message === "Invalid or expired token") {
           localStorage.removeItem("token");
@@ -276,7 +276,8 @@ const StudentPage = () => {
     : allStudents;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <AuthWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -878,6 +879,7 @@ const StudentPage = () => {
           )}
         </div>
       </div>
+    </AuthWrapper>
   );
 };
 

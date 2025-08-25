@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Menu, X, GraduationCap, Shield, Users, BookOpen } from 'lucide-react';
+import { useNavigationLoader } from '../context/NavigationContext';
 
 export default function HomeNavbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -10,6 +11,7 @@ export default function HomeNavbar() {
   const [studentLoggedIn, setStudentLoggedIn] = useState(false);
   const [teacherLoggedIn, setTeacherLoggedIn] = useState(false);
   const router = useRouter();
+  const { startNavigation } = useNavigationLoader();
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
@@ -37,27 +39,27 @@ export default function HomeNavbar() {
 
   const handleAdminPortal = () => {
     if (adminLoggedIn) {
-      router.push("/admin/dashboard");
+      startNavigation("/admin/dashboard");
     } else {
-      router.push("/login");
+      startNavigation("/login");
     }
     setMenuOpen(false);
   };
 
   const handleStudentPortal = () => {
     if (studentLoggedIn) {
-      router.push("/student/dashboard");
+      startNavigation("/student/dashboard");
     } else {
-      router.push("/student/login");
+      startNavigation("/student/login");
     }
     setMenuOpen(false);
   };
 
   const handleTeacherPortal = () => {
     if (teacherLoggedIn) {
-      router.push("/teacher/dashboard");
+      startNavigation("/teacher/dashboard");
     } else {
-      router.push("/teacher/login");
+      startNavigation("/teacher/login");
     }
     setMenuOpen(false);
   };
@@ -72,7 +74,7 @@ export default function HomeNavbar() {
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-sky-400 bg-clip-text text-transparent">
-              FeeTrack
+              SchoolFlow
             </span>
           </Link>
 

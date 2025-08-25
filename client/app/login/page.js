@@ -156,7 +156,6 @@ export default function AuthPages() {
   };
 
   const handleSubmit = async () => {
-    console.log("Form Data:", formData);
     if (!validateForm()) return;
     setIsLoading(true);
 
@@ -188,7 +187,6 @@ export default function AuthPages() {
       }
 
       const data = await response.json();
-      console.log(data)
       if (!response.ok) {
         alert(
           data.message
@@ -196,7 +194,6 @@ export default function AuthPages() {
         setErrors({ api: data.message || "Something went wrong" });
       } else {
         if (isLogin) {
-          console.log("Response Data:", data);
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
           router.push("/");
@@ -215,7 +212,8 @@ export default function AuthPages() {
   };
 
   useEffect(() => {
-    console.log("token:", localStorage.getItem("token"));
+    // Token presence check on mount if needed
+    localStorage.getItem("token");
   }, []);
 
   const toggleMode = () => {

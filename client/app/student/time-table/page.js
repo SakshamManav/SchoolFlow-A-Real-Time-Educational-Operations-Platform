@@ -130,8 +130,18 @@ export default function Timetable() {
         // Get display lectures from migrated data
         const lectures = getDisplayLecturesFromTimetable(migratedTimetable);
         setDisplayLectures(lectures);
+        setError(''); // Clear any previous errors
       } else {
-        setError(data.error || 'Failed to fetch timetable');
+        // Handle different types of errors with user-friendly messages
+        const errorMessage = data.message || data.error || 'Failed to fetch timetable';
+        setError(errorMessage);
+        
+        // Log the full error for debugging
+        console.error('Timetable fetch error:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: data
+        });
       }
     } catch (err) {
       console.error('Error fetching timetable:', err);
@@ -184,15 +194,45 @@ export default function Timetable() {
           )}
 
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-              <p className="font-semibold">Error:</p>
-              <p>{error}</p>
-              <button
-                onClick={fetchTimetable}
-                className="mt-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-              >
-                Try Again
-              </button>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Timetable Not Available
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>{error}</p>
+                    {error.includes('No timetable available for your class') && (
+                      <p className="mt-2 text-xs text-red-600">
+                         Contact your school to request a timetable for your class.
+                      </p>
+                    )}
+                    {error.includes('No timetables available for your school') && (
+                      <p className="mt-2 text-xs text-red-600">
+                         Your school administrators need to create timetables in the system.
+                      </p>
+                    )}
+                    {error.includes('school information is incomplete') && (
+                      <p className="mt-2 text-xs text-red-600">
+                         Please contact your school administrator to update your profile.
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <button
+                      onClick={fetchTimetable}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

@@ -1,6 +1,7 @@
 "use client"
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
+import AuthWrapper from '../components/AuthWrapper';
 
 export default function Attendance() {
   const [attendanceData, setAttendanceData] = useState({
@@ -31,7 +32,6 @@ export default function Attendance() {
     if (studentUser) {
       try {
         const userData = JSON.parse(studentUser);
-        console.log('Student user data:', userData);
         // Use student_id from the JWT token, not the user id
         setStudentId(userData.id || userData.id);
       } catch (parseError) {
@@ -54,7 +54,6 @@ export default function Attendance() {
     const fetchAttendanceData = async () => {
       try {
         setLoading(true);
-        console.log('Fetching attendance for student ID:', studentId);
         
         const token = localStorage.getItem('student_token');
         
@@ -68,56 +67,45 @@ export default function Attendance() {
         };
 
         // Fetch overall attendance stats
-        console.log('Fetching stats...');
         const statsResponse = await fetch(`http://localhost:5001/student/profile/attendance-stats/${studentId}`, {
           headers
         });
 
-        console.log('Stats response status:', statsResponse.status);
         if (!statsResponse.ok) {
           const errorText = await statsResponse.text();
-          console.log('Stats error response:', errorText);
           throw new Error(`Failed to fetch attendance statistics: ${errorText}`);
         }
 
         const statsData = await statsResponse.json();
-        console.log('Stats data:', statsData);
         const stats = statsData.data;
 
         // Fetch subject-wise attendance
-        console.log('Fetching subject-wise attendance...');
         const subjectResponse = await fetch(`http://localhost:5001/student/profile/subject-wise-attendance/${studentId}`, {
           headers
         });
 
         if (!subjectResponse.ok) {
           const errorText = await subjectResponse.text();
-          console.log('Subject-wise error response:', errorText);
           throw new Error(`Failed to fetch subject-wise attendance: ${errorText}`);
         }
 
         const subjectData = await subjectResponse.json();
-        console.log('Subject data:', subjectData);
         const subjects = subjectData.data;
 
         // Fetch recent attendance
-        console.log('Fetching recent attendance...');
         const recentResponse = await fetch(`http://localhost:5001/student/profile/recent-attendance/${studentId}?limit=5`, {
           headers
         });
 
         if (!recentResponse.ok) {
           const errorText = await recentResponse.text();
-          console.log('Recent attendance error response:', errorText);
           throw new Error(`Failed to fetch recent attendance: ${errorText}`);
         }
 
         const recentData = await recentResponse.json();
-        console.log('Recent data:', recentData);
         const recentAttendance = recentData.data;
 
         // Fetch attendance records for absent dates
-        console.log('Fetching absent dates...');
         const attendanceResponse = await fetch(`http://localhost:5001/student/profile/attendance/${studentId}?status=Absent&limit=3`, {
           headers
         });
@@ -125,7 +113,6 @@ export default function Attendance() {
         let absentDates = [];
         if (attendanceResponse.ok) {
           const attendanceData = await attendanceResponse.json();
-          console.log('Attendance data:', attendanceData);
           absentDates = attendanceData.data.map(record => ({
             date: new Date(record.date).toLocaleDateString('en-CA'),
             subject: record.subject,
@@ -149,7 +136,6 @@ export default function Attendance() {
         const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1).toISOString().split('T')[0];
         const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0).toISOString().split('T')[0];
 
-        console.log('Fetching last month data...');
         const lastMonthResponse = await fetch(`http://localhost:5001/student/profile/attendance-stats/${studentId}?start_date=${lastMonthStart}&end_date=${lastMonthEnd}`, {
           headers
         });
@@ -157,7 +143,6 @@ export default function Attendance() {
         let lastMonthPercentage = stats.attendance_percentage;
         if (lastMonthResponse.ok) {
           const lastMonthData = await lastMonthResponse.json();
-          console.log('Last month data:', lastMonthData);
           lastMonthPercentage = lastMonthData.data.attendance_percentage || 0;
         }
 
@@ -188,13 +173,7 @@ export default function Attendance() {
         // Consolidate subjects by normalized name
         const subjectMap = new Map();
         
-        subjects.forEach((subject, index) => {
-          console.log(`Subject ${index}:`, {
-            name: subject.subject,
-            percentage: subject.attendance_percentage,
-            totalClasses: subject.total_classes,
-            presentCount: subject.present_count
-          });
+  subjects.forEach((subject, index) => {
           
           const normalizedName = normalizeSubjectName(subject.subject);
           
@@ -205,18 +184,10 @@ export default function Attendance() {
           if (subjectMap.has(normalizedName)) {
             // If subject already exists, combine the data
             const existing = subjectMap.get(normalizedName);
-            console.log(`Combining ${normalizedName} - existing:`, existing);
-            console.log(`Combining ${normalizedName} - new:`, { totalClasses, presentCount });
             
             const combinedTotalClasses = existing.totalClasses + totalClasses;
             const combinedAttended = existing.attended + presentCount;
             const percentage = combinedTotalClasses > 0 ? Math.round((combinedAttended * 100) / combinedTotalClasses) : 0;
-            
-            console.log(`Combined result for ${normalizedName}:`, {
-              totalClasses: combinedTotalClasses,
-              totalAttended: combinedAttended,
-              percentage
-            });
             
             subjectMap.set(normalizedName, {
               name: normalizedName,
@@ -240,8 +211,6 @@ export default function Attendance() {
         // Convert map back to array
         const formattedSubjects = Array.from(subjectMap.values());
 
-        console.log('Raw subjects from backend:', subjects);
-        console.log('Consolidated subjects:', formattedSubjects);
 
         // Format recent attendance
         const formattedRecentAttendance = recentAttendance.map(record => ({
@@ -305,7 +274,8 @@ export default function Attendance() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
+    <AuthWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
       <Head>
         <title>Attendance Tracker</title>
         <meta name="description" content="Student Attendance Tracking Page" />
@@ -522,5 +492,6 @@ export default function Attendance() {
         )}
       </main>
     </div>
+    </AuthWrapper>
   );
 }

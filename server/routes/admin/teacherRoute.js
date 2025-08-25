@@ -4,7 +4,7 @@ const teacherQueries = require('../../models/admin/teacher');
 const authenticateToken = require('../../middleware/admin/authMiddleware');
 const db = require('../../database/db');
 const jwt = require('jsonwebtoken');
-const SECRET_KEY = "your_secret_key"; // Ensure this matches your middleware
+const SECRET_KEY = process.env.JWT_SECRET; // Ensure this matches your middleware
 
 // Middleware for input validation
 const validateTeacherData = (req, res, next) => {

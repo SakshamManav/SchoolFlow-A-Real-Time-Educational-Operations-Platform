@@ -41,10 +41,10 @@ async function updateStudentUsernames() {
         [username, hashedPassword, student.id]
       );
 
-      console.log(`✅ ${student.student_name} → ${username}`);
+  console.info(`✅ ${student.student_name} → ${username}`);
     }
 
-    console.log("🎯 All student usernames & passwords updated.");
+  console.info("🎯 All student usernames & passwords updated.");
   } catch (err) {
     console.error("❌ Error:", err);
   }

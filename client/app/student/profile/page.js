@@ -2,6 +2,7 @@
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AuthWrapper from '../components/AuthWrapper';
 
 export default function Profile() {
   const [student, setStudent] = useState(null);
@@ -104,7 +105,8 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
+    <AuthWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
       <Head>
         <title>Student Profile</title>
         <meta name="description" content="Student Profile Page" />
@@ -126,7 +128,7 @@ export default function Profile() {
           <div className="flex flex-col items-center space-y-4 p-6 bg-gradient-to-b from-green-50 to-white rounded-xl shadow-md">
             <div className="relative">
               <img
-                src={student.stud_pic_url || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuAXCWJGafTH5JcaOyDlvBCtlUxQcE29E47g&s"}
+                src={student.stud_pic_url || "https://as1.ftcdn.net/v2/jpg/05/60/26/08/1000_F_560260880_O1V3Qm2cNO5HWjN66mBh2NrlPHNHOUxW.jpg"}
                 alt="Profile Picture"
                 className="w-40 h-40 rounded-full object-cover border-4 border-green-300 shadow-lg transition-transform duration-300 hover:scale-105"
               />
@@ -234,5 +236,6 @@ export default function Profile() {
         </div>
       </main>
     </div>
+    </AuthWrapper>
   );
 }

@@ -88,11 +88,7 @@ router.get('/attendance/:student_id', studentAuth, async (req, res) => {
 // Get student's attendance statistics
 router.get('/attendance-stats/:student_id', studentAuth, async (req, res) => {
   try {
-    console.log('=== ATTENDANCE STATS ROUTE HIT ===');
-    console.log('Request params:', req.params);
-    console.log('Request query:', req.query);
-    console.log('Authenticated user:', req.user);
-    console.log('=====================================');
+    
     
     const student_id = req.params.student_id;
     const { subject, start_date, end_date } = req.query;
@@ -100,7 +96,7 @@ router.get('/attendance-stats/:student_id', studentAuth, async (req, res) => {
 
     // Ensure student can only access their own stats
     if (req.user && req.user.id && String(req.user.id) !== String(student_id)) {
-      console.log('Access denied: User ID mismatch', { userStudentID: req.user.student_id, requestedID: student_id });
+      
       return res.status(403).json({ 
         success: false, 
         message: 'Forbidden: You can only view your own attendance statistics' 
@@ -113,9 +109,9 @@ router.get('/attendance-stats/:student_id', studentAuth, async (req, res) => {
       end_date
     };
 
-    console.log('Calling StudentAttendance.getStudentAttendanceStats with:', { student_id, school_id, filters });
+    
     const stats = await StudentAttendance.getStudentAttendanceStats(parseInt(student_id), parseInt(school_id), filters);
-    console.log('Stats result:', stats);
+    
     
     res.json({ 
       success: true, 
@@ -213,7 +209,7 @@ router.get('/recent-attendance/:student_id', studentAuth, async (req, res) => {
       });
     }
 
-    console.log('Getting recent attendance for:', { student_id, school_id, limit: parseInt(limit) });
+    
     const recentAttendance = await StudentAttendance.getRecentAttendance(parseInt(student_id), parseInt(school_id), parseInt(limit));
     res.json({ 
       success: true, 

@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 
-const SECRET_KEY = "your_secret_key"; // ideally from .env
+const SECRET_KEY = process.env.JWT_SECRET;
+if (!SECRET_KEY) {
+  console.error('FATAL: JWT_SECRET missing in environment');
+}
 
 function generateToken(payload) {
   return jwt.sign(payload, SECRET_KEY, { expiresIn: "7d" });

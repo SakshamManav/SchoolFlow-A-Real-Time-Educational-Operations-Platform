@@ -7,7 +7,6 @@ const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    console.log(localStorage.getItem("token"))
     const timer = setTimeout(() => setIsVisible(true), delay);
     return () => clearTimeout(timer);
   }, [delay]);
@@ -53,7 +52,7 @@ const StatCard = ({ number, label, delay = 0 }) => {
 
   useEffect(() => {
     if (isVisible) {
-      const target = parseInt(number.replace(/[^\d]/g, ''));
+      const target = number.includes('%') ? parseFloat(number.replace(/[^\d.]/g, '')) : parseInt(number.replace(/[^\d]/g, ''));
       const duration = 2000;
       const steps = 60;
       const increment = target / steps;
@@ -65,20 +64,31 @@ const StatCard = ({ number, label, delay = 0 }) => {
           setCount(target);
           clearInterval(counter);
         } else {
-          setCount(Math.floor(current));
+          setCount(number.includes('%') ? Math.floor(current * 10) / 10 : Math.floor(current));
         }
       }, duration / steps);
     }
   }, [isVisible, number]);
 
+  const formatNumber = () => {
+    if (number.includes('%')) {
+      return `${count}%`;
+    }
+    
+    const formattedCount = count.toLocaleString();
+    const hasPlus = number.includes('+');
+    
+    return hasPlus ? `${formattedCount}+` : formattedCount;
+  };
+
   return (
-    <div className={`text-center transition-all duration-700 ${
+    <div className={`text-center transition-all duration-700 p-4 ${
       isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
     }`}>
-      <div className="text-4xl md:text-5xl font-bold text-white mb-2">
-        {count.toLocaleString()}{number.includes('+') ? '+' : ''}
+      <div className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 whitespace-nowrap overflow-hidden">
+        {formatNumber()}
       </div>
-      <div className="text-blue-100 text-lg">{label}</div>
+      <div className="text-blue-100 text-sm md:text-base lg:text-lg font-medium">{label}</div>
     </div>
   );
 };
@@ -139,25 +149,32 @@ export default function Home() {
         }`}>
           <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm px-6 py-3 rounded-full border border-gray-700/50">
             <Sparkles className="w-5 h-5 text-cyan-300" />
-            <span className="text-sm font-medium">Trusted by 10,000+ institutions</span>
+            <span className="text-sm font-medium">Trusted by 10,000+ schools worldwide</span>
           </div>
           
           <h1 className="text-6xl md:text-7xl font-black mb-8 leading-tight">
             Welcome to{' '}
             <span className="bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300 bg-clip-text text-transparent animate-pulse">
-              FeeTrack
+              SchoolFlow
             </span>
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Revolutionary fee tracking and management system that transforms how institutions handle payments, 
-            with AI-powered insights and seamless automation.
+            Comprehensive School Management System that streamlines administration, manages students, 
+            tracks attendance, handles fees, and empowers educational excellence with smart automation.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <a
+              href="/admin/dashboard"
+              className="group bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold px-10 py-4 rounded-full text-lg shadow-2xl hover:shadow-sky-500/50 hover:from-sky-400 hover:to-blue-500 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex items-center gap-3"
+            >
+              Admin Portal
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+            </a>
+            <a
               href="/student/dashboard"
-              className="group bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold px-10 py-4 rounded-full text-lg shadow-2xl hover:shadow-cyan-500/50 hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex items-center gap-3"
+              className="group bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold px-10 py-4 rounded-full text-lg shadow-2xl hover:shadow-emerald-500/50 hover:from-emerald-400 hover:to-teal-500 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex items-center gap-3"
             >
               Student Portal
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
@@ -169,19 +186,15 @@ export default function Home() {
               Teacher Portal
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
             </a>
-            <button className="group border-2 border-gray-600/50 text-gray-200 font-semibold px-8 py-4 rounded-full text-lg backdrop-blur-sm hover:bg-gray-800/30 hover:border-cyan-400/50 transition-all duration-300 flex items-center gap-3">
-              <Globe className="w-5 h-5" />
-              Watch Demo
-            </button>
           </div>
         </div>
 
         {/* Stats Section */}
-        <div className="relative mt-20 grid grid-cols-1 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-          <StatCard number="10000+" label="Happy Schools" delay={200} />
-          <StatCard number="5000000+" label="Students Managed" delay={400} />
-          <StatCard number="99.9%" label="Uptime" delay={600} />
-          <StatCard number="24/7" label="Support" delay={800} />
+        <div className="relative mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 max-w-6xl mx-auto px-4">
+          <StatCard number="1000+" label="Schools Served" delay={200} />
+          <StatCard number="200000+" label="Students Managed" delay={400} />
+          <StatCard number="5000+" label="Teachers Connected" delay={600} />
+          <StatCard number="99.9%" label="System Uptime" delay={800} />
         </div>
       </section>
 
@@ -194,34 +207,34 @@ export default function Home() {
               Award-winning Features
             </div>
             <h2 className="text-5xl md:text-6xl font-black mb-6 text-gray-100">
-              Powerful Features to{' '}
+              Complete School{' '}
               <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                Transform Everything
+                Management Solution
               </span>
             </h2>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Experience the next generation of fee management with cutting-edge technology 
-              and intuitive design that makes complex tasks effortless.
+              Experience comprehensive school administration with integrated student management, 
+              attendance tracking, fee collection, timetable management, and powerful analytics.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <FeatureCard
-              icon={DollarSign}
-              title="Smart Fee Tracking"
-              desc="AI-powered real-time updates on payments, dues, and balances with predictive analytics and automated reminders."
+              icon={Users}
+              title="Student Management"
+              desc="Complete student lifecycle management with enrollment, profiles, academic records, and parent communication tools."
               delay={0}
             />
             <FeatureCard
-              icon={Shield}
-              title="Military-Grade Security"
-              desc="Bank-level encryption with Google OAuth integration, multi-factor authentication, and advanced session management."
+              icon={CheckCircle}
+              title="Attendance Tracking"
+              desc="Real-time attendance monitoring with automated reports, SMS notifications, and detailed analytics for better insights."
               delay={200}
             />
             <FeatureCard
-              icon={Download}
-              title="Intelligent Reports"
-              desc="Generate beautiful, comprehensive reports in multiple formats with advanced filtering and custom branding."
+              icon={DollarSign}
+              title="Fee Management"
+              desc="Streamlined fee collection with online payments, automated reminders, receipts, and comprehensive financial reporting."
               delay={400}
             />
           </div>
@@ -229,15 +242,15 @@ export default function Home() {
           {/* Additional Features */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <FeatureCard
-              icon={Users}
-              title="Multi-User Dashboard"
-              desc="Collaborative workspace with role-based access control, real-time notifications, and seamless team management."
+              icon={TrendingUp}
+              title="Academic Analytics"
+              desc="Powerful insights into student performance, attendance patterns, fee collection trends, and institutional growth metrics."
               delay={600}
             />
             <FeatureCard
-              icon={TrendingUp}
-              title="Advanced Analytics"
-              desc="Deep insights with interactive charts, payment trends, forecasting, and customizable KPI tracking."
+              icon={Shield}
+              title="Role-Based Access"
+              desc="Secure multi-user system with admin, teacher, and student portals, each with customized dashboards and permissions."
               delay={800}
             />
           </div>
@@ -249,10 +262,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-100">
-              Loved by Thousands of Institutions
+              Trusted by Educational Leaders Worldwide
             </h2>
             <p className="text-xl text-gray-400">
-              See what our customers say about their experience with FeeTrack
+              See how schools are transforming their operations with SchoolFlow
             </p>
           </div>
 
@@ -260,17 +273,17 @@ export default function Home() {
             <TestimonialCard
               name="Dr. Sarah Johnson"
               role="Principal, Sunrise Academy"
-              content="FeeTrack has revolutionized our fee management. The automated reminders and real-time tracking have reduced our administrative workload by 70%."
+              content="SchoolFlow has transformed our school operations completely. From student enrollment to fee collection, everything is now streamlined and efficient."
             />
             <TestimonialCard
               name="Michael Chen"
-              role="Finance Director, Elite University"
-              content="The analytics and reporting features are incredible. We can now make data-driven decisions and our payment collection rate has improved by 45%."
+              role="Academic Director, Elite High School"
+              content="The attendance tracking and parent communication features are incredible. We've seen a 40% improvement in student attendance since implementation."
             />
             <TestimonialCard
               name="Emma Rodriguez"
-              role="Administrator, Creative School"
-              content="The user interface is so intuitive. Our staff learned the system in just one day, and parents love the transparent payment tracking."
+              role="Administrator, Green Valley School"
+              content="The integrated approach to school management is outstanding. Teachers, students, and parents all love the user-friendly interface and real-time updates."
             />
           </div>
         </div>
@@ -281,15 +294,21 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative max-w-4xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Transform Your Fee Management?
+            Ready to Transform Your School Management?
           </h2>
           <p className="text-xl mb-10 text-gray-300">
-            Join thousands of institutions who trust FeeTrack for their financial operations.
+            Join thousands of schools who trust SchoolFlow for their complete educational administration.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="/student/dashboard"
+              href="/admin/dashboard"
               className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold px-10 py-4 rounded-full text-lg shadow-2xl hover:shadow-cyan-500/50 hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 transform hover:-translate-y-1"
+            >
+              Admin Portal
+            </a>
+            <a
+              href="/student/dashboard"
+              className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold px-10 py-4 rounded-full text-lg shadow-2xl hover:shadow-emerald-500/50 hover:from-emerald-400 hover:to-teal-500 transition-all duration-300 transform hover:-translate-y-1"
             >
               Student Portal
             </a>
@@ -299,9 +318,6 @@ export default function Home() {
             >
               Teacher Portal
             </a>
-            <button className="border-2 border-gray-600/50 text-gray-200 font-semibold px-8 py-4 rounded-full text-lg backdrop-blur-sm hover:bg-gray-800/30 hover:border-cyan-400/50 transition-all duration-300">
-              Schedule Demo
-            </button>
           </div>
         </div>
       </section>
@@ -311,15 +327,15 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-white" />
+              <Users className="w-5 h-5 text-white" />
             </div>
-            <span className="text-2xl font-bold text-gray-100">FeeTrack</span>
+            <span className="text-2xl font-bold text-gray-100">SchoolFlow</span>
           </div>
           <p className="text-sm">
-            © {new Date().getFullYear()} FeeTrack. Made with 💙 for educational excellence.
+            © {new Date().getFullYear()} SchoolFlow. Made with 💙 for educational excellence.
           </p>
           <p className="text-xs text-gray-500 mt-2">
-            Empowering institutions worldwide with intelligent fee management solutions.
+            Empowering schools worldwide with comprehensive management solutions.
           </p>
         </div>
       </footer>
