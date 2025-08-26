@@ -49,5 +49,11 @@ app.use("/teacher", require("./routes/teacher/timetableRoute.js")); // teacher t
 app.use("/teacher", require("./routes/teacher/teacherRoute.js")); // teacher student management
 app.use("/teacher/attendance", require("./routes/teacher/attendanceRoute.js")); // teacher attendance management
 app.listen(port, () => {
-  // server started
+  console.info(`Server running on port ${port} in ${process.env.NODE_ENV} mode`);
+}).on('error', (err) => {
+  console.error('Server failed to start:', err.message);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${port} is already in use. Kill the process or use a different port.`);
+  }
+  process.exit(1);
 });

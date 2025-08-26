@@ -156,6 +156,7 @@ export default function Timetable() {
   }, []);
 
   return (
+    <AuthWrapper>
      <>
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
         <Head>
@@ -308,5 +309,6 @@ export default function Timetable() {
         </main>
       </div>
  </>
+    </AuthWrapper>
   );
 }
