@@ -6,7 +6,7 @@ const path = require("path");
 const axios = require('axios')
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: ["http://localhost:3000", "http://localhost:3001", "https://school-flow-a-real-time-educational-three.vercel.app"],
     credentials: true,
   })
 );
