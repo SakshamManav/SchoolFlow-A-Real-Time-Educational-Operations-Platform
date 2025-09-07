@@ -250,7 +250,7 @@ export default function AuthPages() {
             </p>
             <button
               onClick={toggleMode}
-              className="text-black flex items-center gap-2 bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-opacity-30 transition-all duration-300 font-medium text-sm sm:text-base"
+              className="flex items-center gap-2 bg-white bg-opacity-20 backdrop-blur-sm border border-white border-opacity-30 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-opacity-30 transition-all duration-300 font-medium text-sm sm:text-base"
             >
               {isLogin ? (
                 <>
