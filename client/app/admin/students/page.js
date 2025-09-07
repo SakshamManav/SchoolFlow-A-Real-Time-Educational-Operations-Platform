@@ -281,7 +281,7 @@ const StudentPage = () => {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-3">
                 <Users className="w-8 h-8 text-indigo-600" />
                 <h1 className="text-3xl font-bold text-gray-800">
@@ -290,7 +290,7 @@ const StudentPage = () => {
               </div>
               <button
                 onClick={openAddForm}
-                className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-base transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-base transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 mx-auto sm:mx-0"
               >
                 <Plus className="w-5 h-5" />
                 Add Student
