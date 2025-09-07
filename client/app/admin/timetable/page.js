@@ -112,7 +112,7 @@ export default function AdminTimetable() {
       try {
         setLoading(true);
         const response = await fetch(
-          "http://localhost:5001/admin/timetable/classes",
+          "https://schoolflow-a-real-time-educational.onrender.com/admin/timetable/classes",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -159,7 +159,7 @@ export default function AdminTimetable() {
   const handleViewClass = async (classId) => {
     try {
       const response = await fetch(
-        `http://localhost:5001/admin/timetable/timetable/${classId}`,
+        `https://schoolflow-a-real-time-educational.onrender.com/admin/timetable/timetable/${classId}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
@@ -189,7 +189,7 @@ export default function AdminTimetable() {
     if (!timetable || Object.keys(timetable).length === 0) {
       try {
         const response = await fetch(
-          `http://localhost:5001/admin/timetable/timetable/${classId}`,
+          `https://schoolflow-a-real-time-educational.onrender.com/admin/timetable/timetable/${classId}`,
           {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           }
@@ -302,7 +302,7 @@ export default function AdminTimetable() {
 
     try {
       const response = await fetch(
-        `http://localhost:5001/admin/timetable/update/${editingClass}`,
+        `https://schoolflow-a-real-time-educational.onrender.com/admin/timetable/update/${editingClass}`,
         {
           method: "PUT",
           headers: {
@@ -348,7 +348,7 @@ export default function AdminTimetable() {
     });
 
     try {
-      const response = await fetch("http://localhost:5001/admin/timetable/create", {
+      const response = await fetch("https://schoolflow-a-real-time-educational.onrender.com/admin/timetable/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -404,7 +404,7 @@ export default function AdminTimetable() {
     try {
       if (deleteConfirmation.type === "class") {
         const response = await fetch(
-          `http://localhost:5001/admin/timetable/delete/${deleteConfirmation.classId}`,
+          `https://schoolflow-a-real-time-educational.onrender.com/admin/timetable/delete/${deleteConfirmation.classId}`,
           {
             method: "DELETE",
             headers: {
@@ -424,7 +424,7 @@ export default function AdminTimetable() {
         }
       } else if (deleteConfirmation.type === "slot") {
         const response = await fetch(
-          "http://localhost:5001/admin/timetable/delete/slot",
+          "https://schoolflow-a-real-time-educational.onrender.com/admin/timetable/delete/slot",
           {
             method: "DELETE",
             headers: {

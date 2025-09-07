@@ -67,7 +67,7 @@ export default function Attendance() {
         };
 
         // Fetch overall attendance stats
-        const statsResponse = await fetch(`http://localhost:5001/student/profile/attendance-stats/${studentId}`, {
+  const statsResponse = await fetch(`https://schoolflow-a-real-time-educational.onrender.com/student/profile/attendance-stats/${studentId}`, {
           headers
         });
 
@@ -80,7 +80,7 @@ export default function Attendance() {
         const stats = statsData.data;
 
         // Fetch subject-wise attendance
-        const subjectResponse = await fetch(`http://localhost:5001/student/profile/subject-wise-attendance/${studentId}`, {
+  const subjectResponse = await fetch(`https://schoolflow-a-real-time-educational.onrender.com/student/profile/subject-wise-attendance/${studentId}`, {
           headers
         });
 
@@ -93,7 +93,7 @@ export default function Attendance() {
         const subjects = subjectData.data;
 
         // Fetch recent attendance
-        const recentResponse = await fetch(`http://localhost:5001/student/profile/recent-attendance/${studentId}?limit=5`, {
+  const recentResponse = await fetch(`https://schoolflow-a-real-time-educational.onrender.com/student/profile/recent-attendance/${studentId}?limit=5`, {
           headers
         });
 
@@ -106,7 +106,7 @@ export default function Attendance() {
         const recentAttendance = recentData.data;
 
         // Fetch attendance records for absent dates
-        const attendanceResponse = await fetch(`http://localhost:5001/student/profile/attendance/${studentId}?status=Absent&limit=3`, {
+  const attendanceResponse = await fetch(`https://schoolflow-a-real-time-educational.onrender.com/student/profile/attendance/${studentId}?status=Absent&limit=3`, {
           headers
         });
 
@@ -136,7 +136,7 @@ export default function Attendance() {
         const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1).toISOString().split('T')[0];
         const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0).toISOString().split('T')[0];
 
-        const lastMonthResponse = await fetch(`http://localhost:5001/student/profile/attendance-stats/${studentId}?start_date=${lastMonthStart}&end_date=${lastMonthEnd}`, {
+  const lastMonthResponse = await fetch(`https://schoolflow-a-real-time-educational.onrender.com/student/profile/attendance-stats/${studentId}?start_date=${lastMonthStart}&end_date=${lastMonthEnd}`, {
           headers
         });
 

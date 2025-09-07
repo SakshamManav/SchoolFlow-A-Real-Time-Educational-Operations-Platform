@@ -61,7 +61,7 @@ function StudentDashboard() {
 
     try {
       // Fetch today's timetable - use full timetable API and filter for today
-      const timetableResponse = await fetch('http://localhost:5001/student/timetable/my-timetable', {
+  const timetableResponse = await fetch('https://schoolflow-a-real-time-educational.onrender.com/student/timetable/my-timetable', {
         headers
       });
       
@@ -91,7 +91,7 @@ function StudentDashboard() {
       }
 
       // Fetch attendance stats - use the correct endpoint from working attendance page
-      const attendanceResponse = await fetch(`http://localhost:5001/student/profile/attendance-stats/${studentId}`, {
+  const attendanceResponse = await fetch(`https://schoolflow-a-real-time-educational.onrender.com/student/profile/attendance-stats/${studentId}`, {
         headers
       });
       

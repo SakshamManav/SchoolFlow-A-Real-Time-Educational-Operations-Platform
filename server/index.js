@@ -3,6 +3,7 @@ const app = express();
 const port = process.env.PORT || 5001;
 const cors = require("cors");
 const path = require("path");
+const axios = require('axios')
 app.use(
   cors({
     origin: ["http://localhost:3000", "http://localhost:3001"],

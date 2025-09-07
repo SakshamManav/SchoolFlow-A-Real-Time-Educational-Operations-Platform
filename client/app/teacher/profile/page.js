@@ -45,7 +45,7 @@ const TeacherProfilePage = () => {
   }, []);
 
   // API base URL
-  const API_URL = 'http://localhost:5001/teacher';
+  const API_URL = 'https://schoolflow-a-real-time-educational.onrender.com/teacher';
 
   // Fetch teacher profile
   useEffect(() => {

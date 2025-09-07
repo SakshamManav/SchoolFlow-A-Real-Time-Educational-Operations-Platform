@@ -34,7 +34,7 @@ export default function StudentLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/student/auth/login', {
+  const response = await fetch('https://schoolflow-a-real-time-educational.onrender.com/student/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -61,7 +61,7 @@ const TeacherDashboard = () => {
       
       // Try to fetch detailed data from the teacher API (same as attendance page)
       try {
-        const response = await fetch('http://localhost:5001/teacher/students', {
+  const response = await fetch('https://schoolflow-a-real-time-educational.onrender.com/teacher/students', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

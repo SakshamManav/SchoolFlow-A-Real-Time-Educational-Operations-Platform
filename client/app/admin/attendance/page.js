@@ -20,7 +20,7 @@ import {
   PieChart
 } from "lucide-react";
 
-const API_BASE = "http://localhost:5001/admin/attendance";
+const API_BASE = "https://schoolflow-a-real-time-educational.onrender.com/admin/attendance";
 
 const AttendancePage = () => {
   const [isHydrated, setIsHydrated] = useState(false);
@@ -113,7 +113,7 @@ const AttendancePage = () => {
   const fetchStudents = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5001/admin/student/getallstudents", {
+      const response = await fetch("https://schoolflow-a-real-time-educational.onrender.com/admin/student/getallstudents", {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -136,7 +136,7 @@ const AttendancePage = () => {
   const fetchTeachers = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5001/admin/teacher/getALL", {
+      const response = await fetch("https://schoolflow-a-real-time-educational.onrender.com/admin/teacher/getALL", {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"

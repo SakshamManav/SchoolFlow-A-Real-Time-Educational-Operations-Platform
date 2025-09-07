@@ -83,7 +83,7 @@ const Dashboard = () => {
       // Fetch students with better error handling
       try {
         const t0 = performance.now();
-        const studentsResponse = await fetch("http://localhost:5001/admin/student/getallstudents", { headers });
+        const studentsResponse = await fetch("https://schoolflow-a-real-time-educational.onrender.com/admin/student/getallstudents", { headers });
         const t1 = performance.now();
         latencies.push(t1 - t0);
         if (studentsResponse.ok) {
@@ -100,7 +100,7 @@ const Dashboard = () => {
       // Fetch teachers with better error handling
       try {
         const t0 = performance.now();
-        const teachersResponse = await fetch("http://localhost:5001/admin/teacher/getALL", { headers });
+        const teachersResponse = await fetch("https://schoolflow-a-real-time-educational.onrender.com/admin/teacher/getALL", { headers });
         const t1 = performance.now();
         latencies.push(t1 - t0);
         if (teachersResponse.ok) {
@@ -126,7 +126,7 @@ const Dashboard = () => {
       const uniqueClasses = new Set();
       try {
         const t0 = performance.now();
-        const studentsResponse = await fetch("http://localhost:5001/admin/student/getallstudents", { headers });
+        const studentsResponse = await fetch("https://schoolflow-a-real-time-educational.onrender.com/admin/student/getallstudents", { headers });
         const t1 = performance.now();
         latencies.push(t1 - t0);
         if (studentsResponse.ok) {

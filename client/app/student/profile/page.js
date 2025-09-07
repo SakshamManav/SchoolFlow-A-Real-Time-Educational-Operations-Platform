@@ -41,7 +41,7 @@ export default function Profile() {
           return;
         }
 
-        const response = await fetch(`http://localhost:5001/student/profile/getstudent/${studentId}`, {
+  const response = await fetch(`https://schoolflow-a-real-time-educational.onrender.com/student/profile/getstudent/${studentId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

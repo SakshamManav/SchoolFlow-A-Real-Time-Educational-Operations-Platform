@@ -40,7 +40,7 @@ export default function TeacherLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/teacher/auth/login', {
+  const response = await fetch('https://schoolflow-a-real-time-educational.onrender.com/teacher/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

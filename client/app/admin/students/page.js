@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 
-const API_BASE = "http://localhost:5001/admin/student";
+const API_BASE = "https://schoolflow-a-real-time-educational.onrender.com/admin/student";
 
 const initialStudent = {
   student_id: "",

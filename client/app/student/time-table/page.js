@@ -108,7 +108,7 @@ export default function Timetable() {
         return;
       }
 
-      const response = await fetch('http://localhost:5001/student/timetable/my-timetable', {
+  const response = await fetch('https://schoolflow-a-real-time-educational.onrender.com/student/timetable/my-timetable', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

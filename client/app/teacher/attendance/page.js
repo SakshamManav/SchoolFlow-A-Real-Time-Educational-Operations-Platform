@@ -18,7 +18,7 @@ import {
   Search
 } from "lucide-react";
 
-const API_BASE = "http://localhost:5001/teacher";
+const API_BASE = "https://schoolflow-a-real-time-educational.onrender.com/teacher";
 
 const TeacherAttendancePage = () => {
   const [mounted, setMounted] = useState(false);
