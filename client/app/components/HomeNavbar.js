@@ -65,15 +65,15 @@ export default function HomeNavbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-b border-gray-700/50 relative">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-stone-900/95 backdrop-blur-md border-b border-stone-700/50 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="p-2 bg-gradient-to-r from-cyan-500 to-sky-600 rounded-lg group-hover:scale-105 transition-transform duration-300 shadow-lg shadow-cyan-500/20">
+            <div className="p-2 bg-orange-600 rounded-lg group-hover:scale-105 transition-transform duration-300 shadow-lg shadow-orange-500/20">
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-sky-400 bg-clip-text text-transparent">
+            <span className="text-xl font-bold text-orange-400">
               SchoolFlow
             </span>
           </Link>
@@ -83,7 +83,7 @@ export default function HomeNavbar() {
             {/* Admin Portal Button */}
             <button
               onClick={handleAdminPortal}
-              className="flex items-center space-x-2 px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors duration-200 font-medium shadow-lg shadow-sky-500/20 hover:shadow-sky-500/30 transform hover:-translate-y-0.5 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 focus-visible:ring-offset-gray-900"
+              className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200 font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transform hover:-translate-y-0.5 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-400 focus-visible:ring-offset-stone-900"
             >
               <Shield className="w-4 h-4" />
               <span>{adminLoggedIn ? 'Admin Dashboard' : 'Admin Portal'}</span>
@@ -92,7 +92,7 @@ export default function HomeNavbar() {
             {/* Teacher Portal Button */}
             <button
               onClick={handleTeacherPortal}
-              className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 font-medium shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transform hover:-translate-y-0.5 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-400 focus-visible:ring-offset-gray-900"
+              className="flex items-center space-x-2 px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors duration-200 font-medium shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transform hover:-translate-y-0.5 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-400 focus-visible:ring-offset-stone-900"
             >
               <BookOpen className="w-4 h-4" />
               <span>{teacherLoggedIn ? 'Teacher Dashboard' : 'Teacher Portal'}</span>
@@ -101,7 +101,7 @@ export default function HomeNavbar() {
             {/* Student Portal Button */}
             <button
               onClick={handleStudentPortal}
-              className="flex items-center space-x-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transform hover:-translate-y-0.5 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-gray-900"
+              className="flex items-center space-x-2 px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transform hover:-translate-y-0.5 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-stone-900"
             >
               <Users className="w-4 h-4" />
               <span>{studentLoggedIn ? 'Student Dashboard' : 'Student Portal'}</span>
@@ -112,7 +112,7 @@ export default function HomeNavbar() {
           <div className="md:hidden">
             <button
               onClick={toggleMenu}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors duration-200"
+              className="p-2 text-gray-400 hover:text-white hover:bg-stone-700 rounded-lg transition-colors duration-200"
             >
               {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -121,12 +121,12 @@ export default function HomeNavbar() {
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="md:hidden border-t border-gray-700 py-4 animate-in slide-in-from-top-2 duration-200">
+          <div className="md:hidden border-t border-stone-700 py-4 animate-in slide-in-from-top-2 duration-200">
             <div className="space-y-3">
               {/* Admin Portal Mobile */}
               <button
                 onClick={handleAdminPortal}
-                className="flex items-center space-x-3 w-full px-4 py-3 text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors duration-200 font-medium shadow-lg shadow-sky-500/20 hover:shadow-sky-500/30 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 focus-visible:ring-offset-gray-900"
+                className="flex items-center space-x-3 w-full px-4 py-3 text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors duration-200 font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-400 focus-visible:ring-offset-stone-900"
               >
                 <Shield className="w-5 h-5" />
                 <span>{adminLoggedIn ? 'Admin Dashboard' : 'Admin Portal'}</span>
@@ -135,7 +135,7 @@ export default function HomeNavbar() {
               {/* Teacher Portal Mobile */}
               <button
                 onClick={handleTeacherPortal}
-                className="flex items-center space-x-3 w-full px-4 py-3 text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors duration-200 font-medium shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-400 focus-visible:ring-offset-gray-900"
+                className="flex items-center space-x-3 w-full px-4 py-3 text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors duration-200 font-medium shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-400 focus-visible:ring-offset-stone-900"
               >
                 <BookOpen className="w-5 h-5" />
                 <span>{teacherLoggedIn ? 'Teacher Dashboard' : 'Teacher Portal'}</span>
@@ -144,7 +144,7 @@ export default function HomeNavbar() {
               {/* Student Portal Mobile */}
               <button
                 onClick={handleStudentPortal}
-                className="flex items-center space-x-3 w-full px-4 py-3 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors duration-200 font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-gray-900"
+                className="flex items-center space-x-3 w-full px-4 py-3 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors duration-200 font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 ring-1 ring-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-stone-900"
               >
                 <Users className="w-5 h-5" />
                 <span>{studentLoggedIn ? 'Student Dashboard' : 'Student Portal'}</span>
@@ -153,8 +153,8 @@ export default function HomeNavbar() {
           </div>
         )}
       </div>
-      {/* Subtle gradient accent line */}
-      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-sky-500 via-purple-400 via-cyan-400 to-emerald-400 opacity-70" />
+      {/* Subtle accent line */}
+      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-px bg-orange-500/50" />
     </nav>
   );
 }

@@ -12,7 +12,7 @@ const FeatureCard = ({ icon: Icon, title, desc, delay = 0 }) => {
   }, [delay]);
 
   return (
-    <div className={`group relative bg-gray-800 rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-700 ${
+    <div className={`group relative bg-stone-800 rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-stone-700 ${
       isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
     }`}>
       <div className="relative">
@@ -40,7 +40,7 @@ const StatCard = ({ number, label, delay = 0 }) => {
   }, [delay]);
 
   return (
-    <div className={`text-center transition-all duration-500 p-6 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700/50 ${
+    <div className={`text-center transition-all duration-500 p-6 bg-stone-800/50 backdrop-blur-sm rounded-lg border border-stone-700/50 ${
       isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
     }`}>
       <div className="text-3xl md:text-4xl font-bold text-white mb-2">
@@ -53,14 +53,14 @@ const StatCard = ({ number, label, delay = 0 }) => {
 
 const TestimonialCard = ({ name, role, content, rating = 5 }) => {
   return (
-    <div className="bg-gray-800 rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-700">
+    <div className="bg-stone-800 rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-stone-700">
       <div className="flex items-center mb-4">
         {[...Array(rating)].map((_, i) => (
           <Star key={i} className="w-5 h-5 text-amber-400 fill-current" />
         ))}
       </div>
       <p className="text-gray-300 leading-relaxed mb-6 italic">"{content}"</p>
-      <div className="border-t border-gray-700 pt-4">
+      <div className="border-t border-stone-700 pt-4">
         <div className="font-semibold text-white">{name}</div>
         <div className="text-orange-400 text-sm">{role}</div>
       </div>
@@ -78,13 +78,13 @@ export default function Home() {
   return (
     <>
     <HomeNavbar/>
-    <main className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
+    <main className="min-h-screen w-full bg-stone-950 text-white">
       {/* Hero Section */}
-      <section className="relative w-full pt-32 pb-20 px-6 md:px-20 bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white text-center">
+      <section className="relative w-full pt-32 pb-20 px-6 md:px-20 bg-neutral-900 text-white text-center">
         <div className={`relative max-w-6xl mx-auto transition-all duration-1000 ${
           isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
-          <div className="inline-flex items-center gap-2 bg-gray-700/50 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-600/50 mb-8">
+          <div className="inline-flex items-center gap-2 bg-stone-700/50 backdrop-blur-sm px-4 py-2 rounded-full border border-stone-600/50 mb-8">
             <GraduationCap className="w-4 h-4 text-gray-300" />
             <span className="text-sm font-medium text-gray-300">Trusted by 1,000+ schools nationwide</span>
           </div>
@@ -136,7 +136,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="relative py-16 px-6 md:px-20 bg-gray-900">
+      <section className="relative py-16 px-6 md:px-20 bg-emerald-950">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 bg-orange-500/20 text-orange-400 px-4 py-2 rounded-full text-sm font-medium mb-6 border border-orange-500/30">
@@ -195,7 +195,7 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="relative py-16 px-6 md:px-20 bg-black">
+      <section className="relative py-16 px-6 md:px-20 bg-stone-950">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
@@ -227,7 +227,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-16 px-6 md:px-20 bg-gray-900 text-white text-center">
+      <section className="relative py-16 px-6 md:px-20 bg-neutral-900 text-white text-center">
         <div className="relative max-w-4xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             Ready to Get Started?
@@ -244,7 +244,7 @@ export default function Home() {
             </a>
             <a
               href="/student/dashboard"
-              className="bg-gray-700 text-white hover:bg-gray-600 font-semibold px-8 py-3 rounded-lg text-base shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+              className="bg-stone-700 text-white hover:bg-stone-600 font-semibold px-8 py-3 rounded-lg text-base shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
             >
               Student Portal
             </a>
@@ -259,7 +259,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="relative text-center py-12 text-gray-400 bg-black border-t border-gray-800">
+      <footer className="relative text-center py-12 text-gray-400 bg-stone-950 border-t border-stone-800">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
