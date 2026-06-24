@@ -14,6 +14,8 @@ const dotenv = require("dotenv");
 dotenv.config({ path: path.join(__dirname, ".env") });
 app.use(express.json());
 
+// To prevent render server sleeping due to inactivity........
+//-------------------------------------------------------------------------
 const url = `https://schoolflow-a-real-time-educational.onrender.com/`;
 const interval = 600000;
 
@@ -29,7 +31,7 @@ function reloadWebsite() {
 }
 
 setInterval(reloadWebsite, interval);
-
+// -------------------------------------------------------------------
 
 
 if (!process.env.JWT_SECRET) {
